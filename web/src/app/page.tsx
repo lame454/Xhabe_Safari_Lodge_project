@@ -11,6 +11,8 @@ import {
   QuoteBandSection,
   LogisticsPanelSection,
 } from "@/components/HomeSections";
+import { getPackages } from "@/lib/data/packages";
+import { getFeaturedTestimonials } from "@/lib/data/testimonials";
 
 export const metadata: Metadata = {
   title: "Xhabe Safari Lodge | Luxury Tented Lodge — Chobe, Botswana",
@@ -18,7 +20,12 @@ export const metadata: Metadata = {
     "Perched on a plateau overlooking the Chobe River floodplains and Namibia, Xhabe Safari Lodge offers an intimate 8-room luxury safari experience in Botswana. Game drives, boat cruises, Victoria Falls day trips.",
 };
 
-export default function HomePage() {
+export default async function HomePage() {
+  const [{ packages }, { testimonials }] = await Promise.all([
+    getPackages(),
+    getFeaturedTestimonials(1),
+  ]);
+  const featuredQuote = testimonials[0];
   const highlightAmenities = [
     {
       icon: Sun,
@@ -131,9 +138,9 @@ export default function HomePage() {
 
       {/* ============ SECTION 4: QUOTE BAND (Layout 3) ============ */}
       <QuoteBandSection
-        quote="The staff went above and beyond. Maatla and Beauty made every meal, every drive, every sunrise feel personal. Nowhere else in Botswana have I felt this cared for."
-        author="TripAdvisor Guest"
-        source="TripAdvisor"
+        quote={featuredQuote.quote}
+        author={featuredQuote.guest_name}
+        source={featuredQuote.source}
       />
 
       {/* ============ SECTION 5: ALTERNATING — Activities (Layout 1, reversed) ============ */}
@@ -195,13 +202,9 @@ export default function HomePage() {
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            {[
-              { name: "Package One", nights: "1 Night", highlight: "Sunset game drive & sundowner", min: "" },
-              { name: "Package Two", nights: "2 Nights", highlight: "+ Victoria Falls day trip & boat cruise", min: "Min. 4 guests" },
-              { name: "Package Three", nights: "3 Nights", highlight: "+ Boma dinner, traditional dance & stargazing", min: "Min. 4 guests" },
-            ].map((pkg, i) => (
+            {packages.map((pkg, i) => (
               <div
-                key={i}
+                key={pkg.id}
                 className={`border p-8 text-left flex flex-col ${
                   i === 1
                     ? "border-accent-amber bg-white/5"
@@ -214,10 +217,14 @@ export default function HomePage() {
                   </span>
                 )}
                 <h3 className="font-display text-2xl text-white mb-1">{pkg.name}</h3>
-                <span className="font-body text-xs uppercase tracking-wider text-white/50 mb-4 block">{pkg.nights}</span>
-                <p className="font-body text-sm text-white/70 mb-2 flex-grow">{pkg.highlight}</p>
-                {pkg.min && (
-                  <p className="text-xs text-accent-amber font-body font-semibold">{pkg.min}</p>
+                <span className="font-body text-xs uppercase tracking-wider text-white/50 mb-4 block">
+                  {pkg.nights} {pkg.nights === 1 ? "Night" : "Nights"}
+                </span>
+                <p className="font-body text-sm text-white/70 mb-2 flex-grow">
+                  {pkg.inclusions?.[pkg.inclusions.length - 1] ?? pkg.description}
+                </p>
+                {pkg.min_pax && (
+                  <p className="text-xs text-accent-amber font-body font-semibold">Min. {pkg.min_pax} guests</p>
                 )}
               </div>
             ))}

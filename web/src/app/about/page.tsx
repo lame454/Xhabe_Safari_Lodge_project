@@ -4,33 +4,13 @@ import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 import Button from "@/components/Button";
 import { Award, Leaf, MapPin, Users } from "lucide-react";
+import { getStaff } from "@/lib/data/staff";
 
 export const metadata: Metadata = {
   title: "About Us | Xhabe Safari Lodge — Story, Team & Conservation",
   description:
     "Learn the story of Xhabe Safari Lodge — a Botswana family-owned tented lodge in the Chobe District that blends genuine hospitality, conservation, and community impact.",
 };
-
-const teamMembers = [
-  {
-    name: "Maatla",
-    role: "Senior Safari Guide",
-    bio: "Born and raised in Mabele village, Maatla has guided Chobe's wildlife corridors for over 15 years. His knowledge of leopard behaviour and elephant family groups is unmatched in the region.",
-    image: "/images/team-maatla.jpg",
-  },
-  {
-    name: "Beauty",
-    role: "Lodge Manager & Head of Hospitality",
-    bio: "Beauty brings warmth, precision, and an infectious smile to every guest interaction. She personally oversees all meals, room preparation, and ensures the Xhabe standard is upheld in every detail.",
-    image: "/images/team-beauty.jpg",
-  },
-  {
-    name: "Lindi",
-    role: "River Safari Specialist & Birding Guide",
-    bio: "With a special passion for Chobe's birdlife (520+ species recorded in the district), Lindi leads boat cruises and birding walks that reveal the river's hidden life to even seasoned naturalists.",
-    image: "/images/team-lindi.jpg",
-  },
-];
 
 const values = [
   {
@@ -59,7 +39,9 @@ const values = [
   },
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const { staff } = await getStaff();
+
   return (
     <>
       <NavBar />
@@ -161,22 +143,26 @@ export default function AboutPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {teamMembers.map((member) => (
-              <div key={member.name} className="group">
+            {staff.map((member) => (
+              <div key={member.id} className="group">
                 <div className="relative h-72 overflow-hidden mb-5">
                   <Image
-                    src={member.image}
-                    alt={`${member.name}, ${member.role} at Xhabe Safari Lodge`}
+                    src={member.photo_path || "/images/team-placeholder.jpg"}
+                    alt={`${member.name}${member.role ? `, ${member.role}` : ""} at Xhabe Safari Lodge`}
                     fill
                     sizes="(max-width:768px) 100vw, 33vw"
                     className="object-cover object-top transition-transform duration-700 group-hover:scale-105"
                   />
                 </div>
-                <span className="font-body text-[10px] uppercase tracking-wider text-accent-amber font-semibold block mb-1">
-                  {member.role}
-                </span>
+                {member.role && (
+                  <span className="font-body text-[10px] uppercase tracking-wider text-accent-amber font-semibold block mb-1">
+                    {member.role}
+                  </span>
+                )}
                 <h3 className="font-display text-xl text-base-dark mb-3">{member.name}</h3>
-                <p className="font-body text-sm text-base-dark/70 leading-loose">{member.bio}</p>
+                {member.bio && (
+                  <p className="font-body text-sm text-base-dark/70 leading-loose">{member.bio}</p>
+                )}
               </div>
             ))}
           </div>
