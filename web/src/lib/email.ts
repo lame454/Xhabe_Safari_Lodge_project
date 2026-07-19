@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 import type { BookingRow } from "@/lib/data/types";
 
-const FROM_ADDRESS = "Xhabe Safari Lodge <reservations@xhabesafarilodge.com>";
+const FROM_ADDRESS = process.env.RESEND_FROM_EMAIL ?? "Xhabe Safari Lodge <reservations@xhabesafarilodge.com>";
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr + "T00:00:00Z").toLocaleDateString("en-GB", {
