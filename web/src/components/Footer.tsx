@@ -50,12 +50,10 @@ export default function Footer() {
             <div className="grid grid-cols-2 gap-2 text-sm font-body text-white/80">
               <Link href="/about" className="hover:text-accent-amber transition">About Us</Link>
               <Link href="/accommodation" className="hover:text-accent-amber transition">Accommodation</Link>
-              <Link href="/facilities" className="hover:text-accent-amber transition">Facilities</Link>
               <Link href="/activities" className="hover:text-accent-amber transition">Activities</Link>
-              <Link href="/itinerary" className="hover:text-accent-amber transition">Itinerary</Link>
               <Link href="/gallery" className="hover:text-accent-amber transition">Gallery</Link>
               <Link href="/reviews" className="hover:text-accent-amber transition">Guest Reviews</Link>
-              <Link href="/faq" className="hover:text-accent-amber transition">FAQs</Link>
+              <Link href="/contact" className="hover:text-accent-amber transition">Contact</Link>
             </div>
           </div>
 

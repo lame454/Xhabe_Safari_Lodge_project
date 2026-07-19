@@ -23,6 +23,7 @@ export interface AvailabilityResult {
   available: boolean;
   roomsRemaining: number;
   reason?: string;
+  serviceError?: boolean;
 }
 
 /**
@@ -44,43 +45,48 @@ export async function checkAvailability(
   }
 
   const needed = roomsNeeded(guests);
-  const supabase = await createAdminClient();
+
+  try {
+    const supabase = await createAdminClient();
 
   // Per-date capacity overrides.
-  const { data: availabilityRows } = await supabase
-    .from("availability")
-    .select("date, rooms_available")
-    .in("date", nights);
+    const { data: availabilityRows } = await supabase
+      .from("availability")
+      .select("date, rooms_available")
+      .in("date", nights);
 
-  const overrideByDate = new Map<string, number>(
-    (availabilityRows ?? []).map((row) => [row.date as string, row.rooms_available as number])
-  );
+    const overrideByDate = new Map<string, number>(
+      (availabilityRows ?? []).map((row) => [row.date as string, row.rooms_available as number])
+    );
 
   // All non-cancelled bookings that could overlap this range.
-  const { data: overlapping, error } = await supabase
-    .from("bookings")
-    .select("check_in, check_out, guests")
-    .neq("status", "cancelled")
-    .lt("check_in", checkOut)
-    .gt("check_out", checkIn);
+    const { data: overlapping, error } = await supabase
+      .from("bookings")
+      .select("check_in, check_out, guests")
+      .neq("status", "cancelled")
+      .lt("check_in", checkOut)
+      .gt("check_out", checkIn);
 
-  if (error) {
-    return { available: false, roomsRemaining: 0, reason: "Could not verify availability. Please try again." };
+    if (error) {
+      return { available: false, roomsRemaining: 0, reason: "Could not verify availability. Please try again.", serviceError: true };
+    }
+
+    let minRemaining = Infinity;
+    for (const night of nights) {
+      const capacity = overrideByDate.get(night) ?? TOTAL_CHALETS;
+      const bookedRooms = (overlapping ?? [])
+        .filter((b) => b.check_in <= night && night < b.check_out)
+        .reduce((sum, b) => sum + roomsNeeded(b.guests as number), 0);
+      const remaining = capacity - bookedRooms;
+      minRemaining = Math.min(minRemaining, remaining);
+    }
+
+    return {
+      available: minRemaining >= needed,
+      roomsRemaining: Math.max(0, minRemaining),
+      reason: minRemaining < needed ? "No chalets available for the full duration of that stay." : undefined,
+    };
+  } catch {
+    return { available: false, roomsRemaining: 0, reason: "Availability is temporarily unavailable. Please contact us directly.", serviceError: true };
   }
-
-  let minRemaining = Infinity;
-  for (const night of nights) {
-    const capacity = overrideByDate.get(night) ?? TOTAL_CHALETS;
-    const bookedRooms = (overlapping ?? [])
-      .filter((b) => b.check_in <= night && night < b.check_out)
-      .reduce((sum, b) => sum + roomsNeeded(b.guests as number), 0);
-    const remaining = capacity - bookedRooms;
-    minRemaining = Math.min(minRemaining, remaining);
-  }
-
-  return {
-    available: minRemaining >= needed,
-    roomsRemaining: Math.max(0, minRemaining),
-    reason: minRemaining < needed ? "No chalets available for the full duration of that stay." : undefined,
-  };
 }

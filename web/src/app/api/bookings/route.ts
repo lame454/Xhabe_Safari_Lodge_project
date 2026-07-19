@@ -6,6 +6,10 @@ import { sendBookingConfirmationEmail } from "@/lib/email";
 
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD format.");
 
+function isPastDate(date: string) {
+  return date < new Date().toISOString().slice(0, 10);
+}
+
 const bookingSchema = z
   .object({
     checkIn: dateSchema,
@@ -46,7 +50,7 @@ export async function GET(request: NextRequest) {
   }
 
   const result = await checkAvailability(checkIn, checkOut, guests);
-  return NextResponse.json(result);
+  return NextResponse.json(result, { status: result.serviceError ? 503 : 200 });
 }
 
 /**
@@ -70,8 +74,14 @@ export async function POST(request: NextRequest) {
     );
   }
   const data = parsed.data;
+  if (isPastDate(data.checkIn)) {
+    return NextResponse.json({ error: "Check-in must be today or later." }, { status: 400 });
+  }
 
   const availability = await checkAvailability(data.checkIn, data.checkOut, data.guests);
+  if (availability.serviceError) {
+    return NextResponse.json({ error: availability.reason }, { status: 503 });
+  }
   if (!availability.available) {
     return NextResponse.json(
       { error: availability.reason ?? "No chalets available for those dates." },

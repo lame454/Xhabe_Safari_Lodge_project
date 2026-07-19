@@ -14,6 +14,7 @@ export default function BookingForm({ packages }: Props) {
   const router = useRouter();
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState<string | null>(null);
+  const today = new Date().toISOString().slice(0, 10);
 
   async function handleCheckAvailability(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -108,6 +109,7 @@ export default function BookingForm({ packages }: Props) {
             name="checkIn"
             type="date"
             required
+            min={today}
             onChange={() => setStatus("idle")}
             className="font-body text-sm border border-base-dark/20 bg-white px-4 py-3 focus:outline-none focus:border-accent-amber"
           />
@@ -121,6 +123,7 @@ export default function BookingForm({ packages }: Props) {
             name="checkOut"
             type="date"
             required
+            min={today}
             onChange={() => setStatus("idle")}
             className="font-body text-sm border border-base-dark/20 bg-white px-4 py-3 focus:outline-none focus:border-accent-amber"
           />
@@ -175,6 +178,7 @@ export default function BookingForm({ packages }: Props) {
                 name="firstName"
                 type="text"
                 required
+                autoComplete="given-name"
                 className="font-body text-sm border border-base-dark/20 bg-white px-4 py-3 focus:outline-none focus:border-accent-amber"
               />
             </div>
@@ -187,6 +191,7 @@ export default function BookingForm({ packages }: Props) {
                 name="lastName"
                 type="text"
                 required
+                autoComplete="family-name"
                 className="font-body text-sm border border-base-dark/20 bg-white px-4 py-3 focus:outline-none focus:border-accent-amber"
               />
             </div>
@@ -201,6 +206,7 @@ export default function BookingForm({ packages }: Props) {
                 name="email"
                 type="email"
                 required
+                autoComplete="email"
                 className="font-body text-sm border border-base-dark/20 bg-white px-4 py-3 focus:outline-none focus:border-accent-amber"
               />
             </div>
@@ -212,6 +218,7 @@ export default function BookingForm({ packages }: Props) {
                 id="phone"
                 name="phone"
                 type="tel"
+                autoComplete="tel"
                 className="font-body text-sm border border-base-dark/20 bg-white px-4 py-3 focus:outline-none focus:border-accent-amber"
               />
             </div>

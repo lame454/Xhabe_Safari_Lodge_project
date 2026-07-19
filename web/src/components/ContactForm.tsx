@@ -65,6 +65,7 @@ export default function ContactForm() {
             id="first-name"
             name="first-name"
             type="text"
+            autoComplete="name"
             required
             className="font-body text-sm border border-base-dark/20 bg-white px-4 py-3 focus:outline-none focus:border-accent-amber transition-colors duration-200"
             placeholder="Jane"
@@ -92,7 +93,8 @@ export default function ContactForm() {
         <input
           id="email"
           name="email"
-          type="email"
+            type="email"
+            autoComplete="email"
           required
           className="font-body text-sm border border-base-dark/20 bg-white px-4 py-3 focus:outline-none focus:border-accent-amber transition-colors duration-200"
           placeholder="jane.smith@example.com"
