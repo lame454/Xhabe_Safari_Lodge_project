@@ -25,13 +25,14 @@
   - [x] Build Contact page (`/contact`) — contact details, map embed, full enquiry form, directions
   - [x] Build Contact Success page (`/contact/success`)
   - [x] Build 404 Not Found page (`not-found.tsx`)
-- [ ] Stage 3: Dynamic Data Integration
-  - [ ] Pull packages & rates dynamically from `rate_seasons` Supabase table
-  - [ ] Pull testimonials from `testimonials` table for homepage & reviews
-  - [ ] Pull gallery images from `gallery_images` table
-  - [ ] Pull staff from `staff` table for About page
-  - [ ] Build Booking API route (`/api/bookings`) + availability check
-  - [ ] Add Resend email confirmation on successful booking submission
+- [x] Stage 3: Dynamic Data Integration
+  - [x] Pull packages & rates dynamically from `rate_seasons` Supabase table
+  - [x] Pull testimonials from `testimonials` table for homepage & reviews
+  - [x] Pull gallery images from `gallery_images` table
+  - [x] Pull staff from `staff` table for About page
+  - [x] Build Booking API route (`/api/bookings`) + availability check
+  - [x] Add Resend email confirmation on successful booking submission
+  - [x] (Bonus) Wire the `/contact` enquiry form to a new `/api/enquiries` route → `enquiries` table (it previously posted to nowhere)
 - [ ] Stage 4: SEO, Performance & Accessibility
   - [ ] Generate dynamic `sitemap.xml` and `robots.txt`
   - [ ] Conduct accessibility pass (keyboard nav, contrast check, form labeling)

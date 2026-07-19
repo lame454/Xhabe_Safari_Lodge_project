@@ -17,11 +17,20 @@ const nunitoSans = Nunito_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://xhabesafarilodge.com"),
   title: "Xhabe Safari Lodge | Chobe Riverfront, Botswana",
   description: "An intimate 8-room tented luxury lodge and camping experience overlooking the Chobe River floodplains and Namibian border in Botswana.",
   icons: {
     icon: "/favicon.ico",
   },
+  openGraph: {
+    type: "website",
+    locale: "en_BW",
+    siteName: "Xhabe Safari Lodge",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "Xhabe Safari Lodge, Chobe, Botswana" }],
+  },
+  twitter: { card: "summary_large_image" },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({

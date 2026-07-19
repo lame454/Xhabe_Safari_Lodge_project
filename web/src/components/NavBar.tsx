@@ -16,16 +16,13 @@ export default function NavBar() {
 
   const lodgeLinks = [
     { name: "Accommodation", href: "/accommodation" },
-    { name: "Facilities", href: "/facilities" },
     { name: "Activities", href: "/activities" },
-    { name: "Itinerary", href: "/itinerary" },
   ];
 
   const mainLinks = [
     { name: "About", href: "/about" },
     { name: "Gallery", href: "/gallery" },
     { name: "Reviews", href: "/reviews" },
-    { name: "FAQ", href: "/faq" },
     { name: "Contact", href: "/contact" },
   ];
 
@@ -63,6 +60,13 @@ export default function NavBar() {
               onMouseLeave={() => setIsLodgeDropdownOpen(false)}
             >
               <button
+                type="button"
+                aria-haspopup="true"
+                aria-expanded={isLodgeDropdownOpen}
+                onClick={() => setIsLodgeDropdownOpen((open) => !open)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") setIsLodgeDropdownOpen(false);
+                }}
                 className={`flex items-center font-body text-sm font-medium tracking-wide transition duration-300 hover:text-accent-amber ${
                   lodgeLinks.some((l) => isActive(l.href))
                     ? "text-accent-amber font-semibold"
@@ -74,11 +78,13 @@ export default function NavBar() {
               </button>
 
               {isLodgeDropdownOpen && (
-                <div className="absolute left-0 mt-0 w-48 bg-white border border-base-dark/5 rounded shadow-lg py-2 transition duration-200">
+                <div role="menu" className="absolute left-0 mt-0 w-48 bg-white border border-base-dark/5 rounded shadow-lg py-2 transition duration-200">
                   {lodgeLinks.map((link) => (
                     <Link
                       key={link.href}
                       href={link.href}
+                      role="menuitem"
+                      onClick={() => setIsLodgeDropdownOpen(false)}
                       className={`block px-4 py-2 text-sm font-body hover:bg-base-light/30 hover:text-accent-amber transition ${
                         isActive(link.href) ? "text-accent-amber font-semibold bg-base-light/10" : "text-base-dark/80"
                       }`}

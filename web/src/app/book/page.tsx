@@ -3,7 +3,9 @@ import Image from "next/image";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 import Button from "@/components/Button";
-import { CheckCircle2, AlertCircle } from "lucide-react";
+import BookingForm from "@/components/BookingForm";
+import { CheckCircle2 } from "lucide-react";
+import { getPackages, getActiveRateSeason } from "@/lib/data/packages";
 
 export const metadata: Metadata = {
   title: "Book Your Stay | Xhabe Safari Lodge — Packages & Rates",
@@ -11,67 +13,8 @@ export const metadata: Metadata = {
     "Book a 1, 2, or 3-night all-inclusive stay at Xhabe Safari Lodge in the Chobe District, Botswana. Game drives, river cruises, Victoria Falls, and boma dinners included.",
 };
 
-const packages = [
-  {
-    id: "pkg-1",
-    name: "Package One",
-    nights: "1 Night / 2 Days",
-    minGuests: null,
-    activities: [
-      "Accommodation in luxury tented chalet",
-      "All meals (dinner, breakfast)",
-      "Local beverages throughout",
-      "Sunset game drive + sundowner",
-      "Guided morning walk or bush experience",
-    ],
-    notIncluded: ["River boat cruise", "Victoria Falls day trip", "Boma dinner"],
-    highlight: false,
-    description:
-      "An ideal introduction to the Chobe wilderness — one night under the stars, one golden sunset on the plateau, and a morning in the wild.",
-  },
-  {
-    id: "pkg-2",
-    name: "Package Two",
-    nights: "2 Nights / 3 Days",
-    minGuests: "Minimum 4 guests",
-    activities: [
-      "2 nights accommodation in luxury tented chalet",
-      "All meals (dinner × 2, breakfasts × 2, lunches × 2)",
-      "Local beverages throughout",
-      "Sunset & morning game drives",
-      "Chobe River boat cruise",
-      "Victoria Falls day trip (Zimbabwe)",
-      "Sundowner cocktails each evening",
-    ],
-    notIncluded: ["Boma dinner & traditional dance", "Stargazing session"],
-    highlight: true,
-    description:
-      "The most popular choice. Two immersive nights with the full river-and-bush experience, plus a full day at Victoria Falls — one of the Seven Wonders.",
-  },
-  {
-    id: "pkg-3",
-    name: "Package Three",
-    nights: "3 Nights / 4 Days",
-    minGuests: "Minimum 4 guests",
-    activities: [
-      "3 nights accommodation in luxury tented chalet",
-      "All meals throughout",
-      "Local beverages throughout",
-      "Sunset & morning game drives each day",
-      "Chobe River boat cruise",
-      "Victoria Falls day trip (Zimbabwe)",
-      "Traditional boma dinner with cultural dance",
-      "Guided stargazing session",
-      "Sundowner cocktails each evening",
-    ],
-    notIncluded: [],
-    highlight: false,
-    description:
-      "The complete Xhabe experience. Three nights, every activity, the full spectrum of Chobe — from pre-dawn game drives to star-drenched boma dinners. Nothing held back.",
-  },
-];
-
-export default function BookPage() {
+export default async function BookPage() {
+  const [{ packages }, activeRate] = await Promise.all([getPackages(), getActiveRateSeason()]);
   return (
     <>
       <NavBar />
@@ -110,85 +53,95 @@ export default function BookPage() {
               Three Ways to Experience Xhabe
             </h2>
             <p className="font-body text-sm text-base-dark/65 leading-loose">
-              All packages are all-inclusive of accommodation, meals, and the listed activities. Rates are available on enquiry — contact us directly for current pricing and special seasonal rates.
+              All packages are all-inclusive of accommodation, meals, and the listed activities.
+              {activeRate
+                ? ` Current ${activeRate.season_name} rates from ${activeRate.currency ?? "USD"} ${activeRate.rate_single ?? activeRate.rate_double} per person per night.`
+                : " Rates are available on enquiry — contact us directly for current pricing and special seasonal rates."}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {packages.map((pkg) => (
-              <div
-                key={pkg.id}
-                className={`relative flex flex-col border ${
-                  pkg.highlight
-                    ? "border-accent-amber shadow-xl shadow-accent-amber/10"
-                    : "border-base-dark/10"
-                } bg-white`}
-              >
-                {pkg.highlight && (
-                  <div className="bg-accent-amber text-base-dark text-center py-2">
-                    <span className="font-body text-[10px] uppercase tracking-widest font-bold">
-                      Most Popular
+            {packages.map((pkg, i) => {
+              const highlight = i === 1;
+              return (
+                <div
+                  key={pkg.id}
+                  className={`relative flex flex-col border ${
+                    highlight ? "border-accent-amber shadow-xl shadow-accent-amber/10" : "border-base-dark/10"
+                  } bg-white`}
+                >
+                  {highlight && (
+                    <div className="bg-accent-amber text-base-dark text-center py-2">
+                      <span className="font-body text-[10px] uppercase tracking-widest font-bold">
+                        Most Popular
+                      </span>
+                    </div>
+                  )}
+                  <div className="p-8 flex flex-col flex-grow">
+                    <h3 className="font-display text-2xl text-base-dark mb-1">{pkg.name}</h3>
+                    <span className="font-body text-xs uppercase tracking-wider text-base-dark/50 block mb-1">
+                      {pkg.nights} {pkg.nights === 1 ? "Night" : "Nights"}
                     </span>
+                    {pkg.min_pax ? (
+                      <span className="font-body text-[10px] text-accent-amber font-semibold uppercase tracking-wider block mb-4">
+                        Minimum {pkg.min_pax} guests
+                      </span>
+                    ) : (
+                      <div className="mb-4" />
+                    )}
+                    {pkg.description && (
+                      <p className="font-body text-sm text-base-dark/65 leading-loose mb-6 pb-6 border-b border-base-dark/10">
+                        {pkg.description}
+                      </p>
+                    )}
+
+                    {/* Included activities */}
+                    <h4 className="font-body text-[10px] uppercase tracking-wider text-base-dark/50 mb-3 font-semibold">
+                      Included
+                    </h4>
+                    <ul className="space-y-2 mb-8 flex-grow">
+                      {(pkg.inclusions ?? []).map((item) => (
+                        <li key={item} className="flex items-start gap-3">
+                          <CheckCircle2 className="w-4 h-4 text-accent-amber flex-shrink-0 mt-0.5" />
+                          <span className="font-body text-xs text-base-dark/75 leading-snug">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <Button
+                      href="#book-now"
+                      variant={highlight ? "primary" : "secondary"}
+                      className="w-full text-center justify-center"
+                    >
+                      Check Availability
+                    </Button>
                   </div>
-                )}
-                <div className="p-8 flex flex-col flex-grow">
-                  <h3 className="font-display text-2xl text-base-dark mb-1">{pkg.name}</h3>
-                  <span className="font-body text-xs uppercase tracking-wider text-base-dark/50 block mb-1">
-                    {pkg.nights}
-                  </span>
-                  {pkg.minGuests && (
-                    <span className="font-body text-[10px] text-accent-amber font-semibold uppercase tracking-wider block mb-4">
-                      {pkg.minGuests}
-                    </span>
-                  )}
-                  {!pkg.minGuests && <div className="mb-4" />}
-                  <p className="font-body text-sm text-base-dark/65 leading-loose mb-6 pb-6 border-b border-base-dark/10">
-                    {pkg.description}
-                  </p>
-
-                  {/* Included activities */}
-                  <h4 className="font-body text-[10px] uppercase tracking-wider text-base-dark/50 mb-3 font-semibold">
-                    Included
-                  </h4>
-                  <ul className="space-y-2 mb-6 flex-grow">
-                    {pkg.activities.map((item) => (
-                      <li key={item} className="flex items-start gap-3">
-                        <CheckCircle2 className="w-4 h-4 text-accent-amber flex-shrink-0 mt-0.5" />
-                        <span className="font-body text-xs text-base-dark/75 leading-snug">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  {/* Not included */}
-                  {pkg.notIncluded.length > 0 && (
-                    <>
-                      <h4 className="font-body text-[10px] uppercase tracking-wider text-base-dark/40 mb-3 font-semibold">
-                        Not Included
-                      </h4>
-                      <ul className="space-y-2 mb-8">
-                        {pkg.notIncluded.map((item) => (
-                          <li key={item} className="flex items-start gap-3">
-                            <AlertCircle className="w-4 h-4 text-base-dark/20 flex-shrink-0 mt-0.5" />
-                            <span className="font-body text-xs text-base-dark/40 leading-snug">{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </>
-                  )}
-
-                  <Button
-                    href="/contact"
-                    variant={pkg.highlight ? "primary" : "secondary"}
-                    className="w-full text-center justify-center"
-                  >
-                    Enquire About This Package
-                  </Button>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
+
+      {/* BOOKING FORM */}
+      <section id="book-now" className="py-24 bg-white scroll-mt-24">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <span className="text-[10px] uppercase tracking-[0.25em] text-accent-amber font-semibold font-body mb-3 block">
+              Check Availability
+            </span>
+            <h2 className="font-display text-3xl md:text-4xl text-base-dark mb-5">
+              Request Your Stay
+            </h2>
+            <p className="font-body text-sm text-base-dark/65 leading-loose">
+              Enter your dates to check chalet availability. Once confirmed available, fill in your
+              details and we'll follow up with a personalised quote within 24 hours.
+            </p>
+          </div>
+          <BookingForm packages={packages} />
+        </div>
+      </section>
+
 
       {/* BOOKING NOTES */}
       <section className="py-20 bg-white">
