@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Brand Palette Variables */
+  --color-base-dark: #1e251c;       /* Deep Earth Olive/Forest Green */
+  --color-cream: #e5d096;           /* Sandy Gold/Warm Safari Tan */
+  --color-cream-light: #fcf9f2;     /* Warm Ivory Cream Background */
+  --color-accent-amber: #d97706;     /* Sunset Orange/Amber */
+}
+
+/* Global resets and typography mappings */
+body {
+  background-color: var(--color-cream-light);
+  color: var(--color-base-dark);
+  font-family: var(--font-body), sans-serif;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display), serif;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom glassmorphism or overlays */
+.glass-effect {
+  background: rgba(252, 249, 242, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.hero-overlay {
+  background: linear-gradient(to bottom, rgba(30, 37, 28, 0.4), rgba(30, 37, 28, 0.75));
+}

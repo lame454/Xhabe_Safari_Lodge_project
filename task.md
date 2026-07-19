@@ -1,0 +1,44 @@
+# Rebuild Checklist: Xhabe Safari Lodge
+
+- [x] Stage 0: Foundations & Scaffolding
+  - [x] Scaffold Next.js 15 App Router project in `web/` subdirectory
+  - [x] Set up environment variables (.env.local template)
+  - [x] Install Supabase client libraries
+  - [x] Create and run Supabase database migrations (SQL schema in §4)
+  - [x] Set up Cloudflare Pages OpenNext adapter configuration
+  - [x] Create Supabase keep-alive GitHub Action workflow
+  - [x] Verify test database query renders on homepage
+- [x] Stage 1: Design System & Shared Layouts
+  - [x] Configure Tailwind design tokens (colors and fonts)
+  - [x] Build responsive `<NavBar>` with new sitemap URLs
+  - [x] Build `<Footer>` with correct contact info and social links
+  - [x] Build reusable UI elements (`<Button>`, `<Card>`, `<IconList>`)
+  - [x] Build `<MapEmbed>` Google Maps iframe component
+  - [x] Design four homepage section layouts (alternating row, amenity grid, testimonial band, map+logistics panel)
+- [x] Stage 2: Content Pages
+  - [x] Build Home page (`/`) — hero, amenity grid, alternating sections, packages teaser
+  - [x] Build Accommodation page (`/accommodation`) — room overview, amenities, photo grid, policies
+  - [x] Build Activities page (`/activities`) — 2-col activity grid with images, icons, inclusion labels
+  - [x] Build About page (`/about`) — story, values grid, team profiles, quote band, stat strip
+  - [x] Build Gallery page (`/gallery`) — masonry CSS columns layout with caption overlays
+  - [x] Build Book page (`/book`) — 3-package comparison with included/excluded checklists
+  - [x] Build Contact page (`/contact`) — contact details, map embed, full enquiry form, directions
+  - [x] Build Contact Success page (`/contact/success`)
+  - [x] Build 404 Not Found page (`not-found.tsx`)
+- [ ] Stage 3: Dynamic Data Integration
+  - [ ] Pull packages & rates dynamically from `rate_seasons` Supabase table
+  - [ ] Pull testimonials from `testimonials` table for homepage & reviews
+  - [ ] Pull gallery images from `gallery_images` table
+  - [ ] Pull staff from `staff` table for About page
+  - [ ] Build Booking API route (`/api/bookings`) + availability check
+  - [ ] Add Resend email confirmation on successful booking submission
+- [ ] Stage 4: SEO, Performance & Accessibility
+  - [ ] Generate dynamic `sitemap.xml` and `robots.txt`
+  - [ ] Conduct accessibility pass (keyboard nav, contrast check, form labeling)
+  - [ ] Build legal pages (Privacy Policy, Booking Terms)
+  - [ ] Add Open Graph meta images per route
+  - [ ] Run Lighthouse audit and optimize bundle/images (target >90)
+- [ ] Stage 5: QA & Launch
+  - [ ] Perform cross-browser and cross-device QA
+  - [ ] Provide placeholder images in `/public/images/` with correct filenames
+  - [ ] Guide DNS cutover to Cloudflare Pages and verify SSL
