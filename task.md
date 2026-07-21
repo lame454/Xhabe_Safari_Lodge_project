@@ -33,13 +33,14 @@
   - [x] Build Booking API route (`/api/bookings`) + availability check
   - [x] Add Resend email confirmation on successful booking submission
   - [x] (Bonus) Wire the `/contact` enquiry form to a new `/api/enquiries` route → `enquiries` table (it previously posted to nowhere)
-- [ ] Stage 4: SEO, Performance & Accessibility
-  - [ ] Generate dynamic `sitemap.xml` and `robots.txt`
-  - [ ] Conduct accessibility pass (keyboard nav, contrast check, form labeling)
-  - [ ] Build legal pages (Privacy Policy, Booking Terms)
-  - [ ] Add Open Graph meta images per route
-  - [ ] Run Lighthouse audit and optimize bundle/images (target >90)
-- [ ] Stage 5: QA & Launch
-  - [ ] Perform cross-browser and cross-device QA
-  - [ ] Provide placeholder images in `/public/images/` with correct filenames
-  - [ ] Guide DNS cutover to Cloudflare Pages and verify SSL
+- [x] Stage 4: SEO, Performance & Accessibility
+  - [x] Generate dynamic `sitemap.xml` and `robots.txt`
+  - [x] Conduct accessibility pass (keyboard nav, contrast check, form labeling)
+  - [x] Build legal pages (Privacy Policy, Booking Terms)
+  - [x] Add Open Graph meta images per route
+  - [x] Run Lighthouse audit and optimize bundle/images (target >90)
+- [x] Stage 5: QA & Launch
+  - [x] Perform cross-browser and cross-device QA
+  - [x] Provide placeholder images in `/public/images/` with correct filenames
+  - [x] Guide DNS cutover to Cloudflare Pages and verify SSL
+
