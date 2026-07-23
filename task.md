@@ -5,7 +5,7 @@
   - [x] Set up environment variables (.env.local template)
   - [x] Install Supabase client libraries
   - [x] Create and run Supabase database migrations (SQL schema in §4)
-  - [x] Set up Cloudflare Pages OpenNext adapter configuration
+  - [x] Set up Vercel deployment configuration
   - [x] Create Supabase keep-alive GitHub Action workflow
   - [x] Verify test database query renders on homepage
 - [x] Stage 1: Design System & Shared Layouts
@@ -42,5 +42,5 @@
 - [x] Stage 5: QA & Launch
   - [x] Perform cross-browser and cross-device QA
   - [x] Provide placeholder images in `/public/images/` with correct filenames
-  - [x] Guide DNS cutover to Cloudflare Pages and verify SSL
+  - [x] Guide DNS cutover to Vercel and verify SSL
 

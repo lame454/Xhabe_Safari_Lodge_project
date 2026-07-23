@@ -30,6 +30,9 @@ yarn-error.log*
 .wrangler/
 .open-next/
 
+# Vercel
+.vercel/
+
 # IDE
 .vscode/
 .idea/
