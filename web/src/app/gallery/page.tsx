@@ -4,7 +4,9 @@ import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 import Button from "@/components/Button";
 import GalleryGrid from "@/components/GalleryGrid";
+import StickyBookCta from "@/components/StickyBookCta";
 import { getGalleryImages } from "@/lib/data/gallery";
+import { getActivityBySlug } from "@/lib/data/activities";
 
 export const metadata: Metadata = {
   title: "Gallery | Xhabe Safari Lodge — Photos of Chobe, Botswana",
@@ -12,8 +14,20 @@ export const metadata: Metadata = {
     "Browse photos of Xhabe Safari Lodge — luxury tented chalets, Chobe River sunsets, game drives, elephant herds, bird life, and the KAZA wilderness in northern Botswana.",
 };
 
-export default async function GalleryPage() {
-  const { images } = await getGalleryImages();
+interface PageProps {
+  searchParams: Promise<{ activity?: string }>;
+}
+
+export default async function GalleryPage({ searchParams }: PageProps) {
+  const [{ images }, { activity: activityParam }] = await Promise.all([
+    getGalleryImages(),
+    searchParams,
+  ]);
+
+  // Only honour a slug that actually exists, so a stale or hand-edited URL
+  // falls back to the full gallery rather than showing an unknown filter.
+  const activity = activityParam ? getActivityBySlug(activityParam) : undefined;
+
   const heroImage = images[0]?.storage_path ?? "/images/gallery-sunset-floodplain.jpg";
 
   return (
@@ -38,7 +52,7 @@ export default async function GalleryPage() {
             Visual Journal
           </span>
           <h1 className="font-display text-5xl md:text-6xl text-white mb-4 leading-none tracking-wide">
-            The Chobe in Frame.
+            {activity ? activity.name : "The Chobe in Frame."}
           </h1>
         </div>
       </section>
@@ -46,7 +60,11 @@ export default async function GalleryPage() {
       {/* GALLERY GRID */}
       <section className="py-20 bg-base-cream-light">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <GalleryGrid images={images} />
+          <GalleryGrid
+            images={images}
+            activitySlug={activity?.slug}
+            activityLabel={activity?.name}
+          />
         </div>
       </section>
 
@@ -65,6 +83,7 @@ export default async function GalleryPage() {
         </div>
       </section>
 
+      <StickyBookCta />
       <Footer />
     </>
   );

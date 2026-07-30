@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 import Button from "@/components/Button";
 import BookingForm from "@/components/BookingForm";
-import { CheckCircle2 } from "lucide-react";
-import { getPackages, getActiveRateSeason } from "@/lib/data/packages";
+import Accordion from "@/components/Accordion";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { getPackages, getActiveRateSeason, packageSlug } from "@/lib/data/packages";
 
 export const metadata: Metadata = {
   title: "Book Your Stay | Xhabe Safari Lodge — Packages & Rates",
@@ -13,8 +15,24 @@ export const metadata: Metadata = {
     "Book a 1, 2, or 3-night all-inclusive stay at Xhabe Safari Lodge in the Chobe District, Botswana. Game drives, river cruises, Victoria Falls, and boma dinners included.",
 };
 
-export default async function BookPage() {
-  const [{ packages }, activeRate] = await Promise.all([getPackages(), getActiveRateSeason()]);
+interface PageProps {
+  searchParams: Promise<{ package?: string }>;
+}
+
+export default async function BookPage({ searchParams }: PageProps) {
+  const [{ packages }, activeRate, { package: packageParam }] = await Promise.all([
+    getPackages(),
+    getActiveRateSeason(),
+    searchParams,
+  ]);
+
+  // A package card or sticky CTA can deep-link here with its package already
+  // chosen (`/book?package=<slug>`). Resolve the slug to the row id the form
+  // submits, ignoring anything that doesn't match a real package.
+  const preselected = packageParam
+    ? packages.find((pkg) => packageSlug(pkg) === packageParam)
+    : undefined;
+
   return (
     <>
       <NavBar />
@@ -108,13 +126,22 @@ export default async function BookPage() {
                       ))}
                     </ul>
 
-                    <Button
-                      href="#book-now"
-                      variant={highlight ? "primary" : "secondary"}
-                      className="w-full text-center justify-center"
-                    >
-                      Check Availability
-                    </Button>
+                    <div className="flex flex-col gap-3">
+                      <Button
+                        href={`#book-now`}
+                        variant={highlight ? "primary" : "secondary"}
+                        className="w-full text-center justify-center"
+                      >
+                        Check Availability
+                      </Button>
+                      <Link
+                        href={`/packages/${packageSlug(pkg)}`}
+                        className="group inline-flex items-center justify-center gap-1.5 font-body text-[10px] uppercase tracking-widest font-semibold text-base-dark/55 hover:text-accent-amber active:text-accent-amber transition-colors duration-200"
+                      >
+                        Full package details
+                        <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+                      </Link>
+                    </div>
                   </div>
                 </div>
               );
@@ -134,23 +161,24 @@ export default async function BookPage() {
               Request Your Stay
             </h2>
             <p className="font-body text-sm text-base-dark/65 leading-loose">
-              Enter your dates to check chalet availability. Once confirmed available, fill in your
-              details and we'll follow up with a personalised quote within 24 hours.
+              Pick your dates on the calendar to check chalet availability. Once confirmed
+              available, fill in your details and we&apos;ll follow up with a personalised quote
+              within 24 hours.
             </p>
           </div>
-          <BookingForm packages={packages} />
+          <BookingForm packages={packages} preselectedPackageId={preselected?.id} />
         </div>
       </section>
 
 
       {/* BOOKING NOTES */}
       <section className="py-20 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="font-display text-2xl md:text-3xl text-base-dark mb-10 text-center">
             Booking Information
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {[
+          <Accordion
+            sections={[
               {
                 title: "How to Book",
                 items: [
@@ -187,20 +215,8 @@ export default async function BookPage() {
                   "Travel insurance strongly recommended",
                 ],
               },
-            ].map((section) => (
-              <div key={section.title} className="border-l-2 border-accent-amber pl-6">
-                <h3 className="font-display text-lg text-base-dark mb-3">{section.title}</h3>
-                <ul className="space-y-2">
-                  {section.items.map((item) => (
-                    <li key={item} className="flex items-start gap-2">
-                      <span className="w-1 h-1 rounded-full bg-accent-amber mt-2 flex-shrink-0" />
-                      <span className="font-body text-sm text-base-dark/75">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
+            ]}
+          />
         </div>
       </section>
 

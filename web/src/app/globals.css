@@ -39,3 +39,34 @@ html {
 .hero-overlay {
   background: linear-gradient(to bottom, rgba(30, 37, 28, 0.4), rgba(30, 37, 28, 0.75));
 }
+
+/*
+ * Interaction affordances — the "Explore →" / "Gallery" hints that tell a
+ * visitor a card or image is pressable.
+ *
+ * The distinction that matters is whether the device can hover, not how wide
+ * the screen is: a touch user never triggers a hover reveal, so hiding the hint
+ * behind one leaves them with no signal at all. `@media (hover: hover)` asks
+ * that question directly, instead of using viewport width as a proxy for it.
+ *
+ * Written as plain CSS rather than stacked `md:opacity-*` utilities because the
+ * utility form depends on cascade order between a base rule and a media-query
+ * rule of equal specificity — which Next's dev server breaks by injecting
+ * duplicate stylesheets, leaving the hint permanently visible on desktop.
+ */
+.affordance {
+  opacity: 1;
+  transition: opacity 300ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .affordance {
+    opacity: 0;
+  }
+
+  .group:hover .affordance,
+  .group:focus-visible .affordance,
+  .group:focus-within .affordance {
+    opacity: 1;
+  }
+}

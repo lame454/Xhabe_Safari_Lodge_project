@@ -5,13 +5,14 @@ import { Sun, Binoculars, Waves, Eye, Users, Star, ArrowRight } from "lucide-rea
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 import Button from "@/components/Button";
+import StickyBookCta from "@/components/StickyBookCta";
 import {
   AlternatingSection,
   AmenityGridSection,
   QuoteBandSection,
   LogisticsPanelSection,
 } from "@/components/HomeSections";
-import { getPackages } from "@/lib/data/packages";
+import { getPackages, packageSlug } from "@/lib/data/packages";
 import { getFeaturedTestimonials } from "@/lib/data/testimonials";
 
 export const metadata: Metadata = {
@@ -26,42 +27,56 @@ export default async function HomePage() {
     getFeaturedTestimonials(1),
   ]);
   const featuredQuote = testimonials[0];
+  // Every highlight routes somewhere: the icon and card are the link, so this
+  // block doubles as the homepage's primary wayfinding into the site.
   const highlightAmenities = [
     {
       icon: Sun,
       title: "Million-Dollar Sunsets",
       description:
         "Watch the Chobe floodplains transform into liquid gold each evening from your private viewing deck overlooking the Namibia border.",
+      href: "/activities#sundowners",
+      linkLabel: "Sundowners",
     },
     {
       icon: Binoculars,
       title: "Big Five Country",
       description:
         "5 km from Chobe National Park's eastern boundary inside the KAZA Conservation Area — one of Africa's largest and wildest transfrontier reserves.",
+      href: "/activities#morning-game-drive",
+      linkLabel: "Game drives",
     },
     {
       icon: Waves,
       title: "River & Wilderness",
       description:
         "The Chobe River's channels and lagoons draw elephant herds, hippo pods, and hundreds of bird species to your doorstep year-round.",
+      href: "/activities#river-boat-cruise",
+      linkLabel: "River cruises",
     },
     {
       icon: Eye,
       title: "Intimate & Authentic",
       description:
         "Only 8 luxury tented rooms ensure a genuinely personal experience — not a resort, not a chain — led by a passionate local team.",
+      href: "/accommodation",
+      linkLabel: "The chalets",
     },
     {
       icon: Users,
       title: "Expert Local Guides",
       description:
         "Our guides — Maatla, Beauty, Lindi, and the team — bring decades of knowledge of the Chobe ecosystem and its wildlife behaviours.",
+      href: "/about",
+      linkLabel: "Meet the team",
     },
     {
       icon: Star,
       title: "All-Inclusive Packages",
       description:
         "Three carefully curated stay packages from 1 to 3 nights, each fully inclusive of meals, activities, and local beverages.",
+      href: "/packages",
+      linkLabel: "Compare packages",
     },
   ];
 
@@ -203,12 +218,15 @@ export default async function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             {packages.map((pkg, i) => (
-              <div
+              // Whole card is the link — easier to tap than an inner
+              // "Learn more", and the hover lift signals it's pressable.
+              <Link
                 key={pkg.id}
-                className={`border p-8 text-left flex flex-col ${
+                href={`/packages/${packageSlug(pkg)}`}
+                className={`group border p-8 text-left flex flex-col transition duration-300 hover:-translate-y-1 hover:shadow-xl active:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber focus-visible:ring-offset-2 focus-visible:ring-offset-base-dark ${
                   i === 1
-                    ? "border-accent-amber bg-white/5"
-                    : "border-white/10 bg-white/[0.02]"
+                    ? "border-accent-amber bg-white/5 hover:bg-white/10"
+                    : "border-white/10 bg-white/[0.02] hover:border-accent-amber/50 hover:bg-white/[0.06]"
                 }`}
               >
                 {i === 1 && (
@@ -216,34 +234,44 @@ export default async function HomePage() {
                     Most Popular
                   </span>
                 )}
-                <h3 className="font-display text-2xl text-white mb-1">{pkg.name}</h3>
+                <h3 className="font-display text-2xl text-white mb-1 group-hover:text-accent-amber transition-colors duration-300">
+                  {pkg.name}
+                </h3>
                 <span className="font-body text-xs uppercase tracking-wider text-white/50 mb-4 block">
                   {pkg.nights} {pkg.nights === 1 ? "Night" : "Nights"}
                 </span>
-                <p className="font-body text-sm text-white/70 mb-2 flex-grow">
+                <p className="font-body text-sm text-white/70 mb-4 flex-grow">
                   {pkg.inclusions?.[pkg.inclusions.length - 1] ?? pkg.description}
                 </p>
                 {pkg.min_pax && (
-                  <p className="text-xs text-accent-amber font-body font-semibold">Min. {pkg.min_pax} guests</p>
+                  <p className="text-xs text-accent-amber font-body font-semibold mb-4">
+                    Min. {pkg.min_pax} guests
+                  </p>
                 )}
-              </div>
+                <span className="flex items-center gap-1.5 font-body text-[10px] uppercase tracking-widest font-semibold text-accent-amber">
+                  See full package
+                  <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+                </span>
+              </Link>
             ))}
           </div>
 
           <div className="flex flex-wrap gap-4 justify-center">
-            <Button href="/book" variant="primary">
-              Check Availability & Rates
+            <Button href="/packages" variant="primary">
+              Compare All Packages
             </Button>
             <Link
               href="/gallery"
-              className="inline-flex items-center gap-2 font-body text-xs font-semibold uppercase tracking-wider text-white/70 hover:text-accent-amber transition duration-300"
+              className="group inline-flex items-center gap-2 font-body text-xs font-semibold uppercase tracking-wider text-white/70 hover:text-accent-amber active:text-accent-amber transition duration-300"
             >
-              View the Gallery <ArrowRight className="w-4 h-4" />
+              View the Gallery
+              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </div>
         </div>
       </section>
 
+      <StickyBookCta />
       <Footer />
     </>
   );

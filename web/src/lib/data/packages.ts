@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/server";
 import type { PackageRow, RateSeasonRow } from "./types";
 
 // Fallback content — used if Supabase is unreachable or the tables are
@@ -9,6 +9,7 @@ export const FALLBACK_PACKAGES: PackageRow[] = [
   {
     id: "pkg-1",
     name: "Package One",
+    slug: "package-one",
     nights: 1,
     min_pax: null,
     description:
@@ -20,12 +21,14 @@ export const FALLBACK_PACKAGES: PackageRow[] = [
       "Sunset game drive + sundowner",
       "Guided morning walk or bush experience",
     ],
+    activity_slugs: ["morning-game-drive", "sundowners"],
     sort_order: 1,
     created_at: "",
   },
   {
     id: "pkg-2",
     name: "Package Two",
+    slug: "package-two",
     nights: 2,
     min_pax: 4,
     description:
@@ -39,12 +42,19 @@ export const FALLBACK_PACKAGES: PackageRow[] = [
       "Victoria Falls day trip (Zimbabwe)",
       "Sundowner cocktails each evening",
     ],
+    activity_slugs: [
+      "morning-game-drive",
+      "river-boat-cruise",
+      "victoria-falls-day-trip",
+      "sundowners",
+    ],
     sort_order: 2,
     created_at: "",
   },
   {
     id: "pkg-3",
     name: "Package Three",
+    slug: "package-three",
     nights: 3,
     min_pax: 4,
     description:
@@ -60,10 +70,32 @@ export const FALLBACK_PACKAGES: PackageRow[] = [
       "Guided stargazing session",
       "Sundowner cocktails each evening",
     ],
+    activity_slugs: [
+      "morning-game-drive",
+      "river-boat-cruise",
+      "victoria-falls-day-trip",
+      "boma-dinner",
+      "stargazing",
+      "sundowners",
+    ],
     sort_order: 3,
     created_at: "",
   },
 ];
+
+/**
+ * URL segment for a package's detail page.
+ *
+ * Prefers the stored `slug`, falling back to a slugified name so packages the
+ * lodge adds without setting a slug still get a working, stable URL.
+ */
+export function packageSlug(pkg: PackageRow): string {
+  if (pkg.slug) return pkg.slug;
+  return pkg.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
 
 /** Packages ordered for display, from Supabase with a static fallback. */
 export async function getPackages(): Promise<{
@@ -71,25 +103,41 @@ export async function getPackages(): Promise<{
   isLive: boolean;
 }> {
   try {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("packages")
       .select("*")
       .order("sort_order", { ascending: true });
 
-    if (error || !data || data.length === 0) {
+    if (error) {
+      console.error("Packages query failed, serving fallback packages:", error.message);
+      return { packages: FALLBACK_PACKAGES, isLive: false };
+    }
+    if (!data || data.length === 0) {
       return { packages: FALLBACK_PACKAGES, isLive: false };
     }
     return { packages: data as PackageRow[], isLive: true };
-  } catch {
+  } catch (err) {
+    console.error("Packages query threw, serving fallback packages:", err);
     return { packages: FALLBACK_PACKAGES, isLive: false };
   }
+}
+
+/**
+ * A single package by its URL slug, or null if nothing matches.
+ *
+ * Resolves against the same list the index pages render (live or fallback), so
+ * a package card and its detail page can never disagree about what exists.
+ */
+export async function getPackageBySlug(slug: string): Promise<PackageRow | null> {
+  const { packages } = await getPackages();
+  return packages.find((pkg) => packageSlug(pkg) === slug) ?? null;
 }
 
 /** The currently active rate season, if one has been configured. */
 export async function getActiveRateSeason(): Promise<RateSeasonRow | null> {
   try {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("rate_seasons")
       .select("*")
@@ -98,9 +146,14 @@ export async function getActiveRateSeason(): Promise<RateSeasonRow | null> {
       .limit(1)
       .maybeSingle();
 
-    if (error || !data) return null;
+    if (error) {
+      console.error("Rate season query failed, pricing will show as on-enquiry:", error.message);
+      return null;
+    }
+    if (!data) return null;
     return data as RateSeasonRow;
-  } catch {
+  } catch (err) {
+    console.error("Rate season query threw, pricing will show as on-enquiry:", err);
     return null;
   }
 }

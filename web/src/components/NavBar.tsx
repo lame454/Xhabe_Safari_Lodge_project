@@ -17,6 +17,7 @@ export default function NavBar() {
   const lodgeLinks = [
     { name: "Accommodation", href: "/accommodation" },
     { name: "Activities", href: "/activities" },
+    { name: "Packages & Rates", href: "/packages" },
   ];
 
   const mainLinks = [
@@ -122,7 +123,9 @@ export default function NavBar() {
             <button
               onClick={toggleMenu}
               type="button"
-              className="text-base-dark hover:text-accent-amber transition duration-300"
+              // Negative margin + padding keeps the icon visually 24px while
+              // giving it a 40px touch target.
+              className="-m-2 p-2 text-base-dark hover:text-accent-amber active:text-accent-amber transition duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
               aria-controls="mobile-menu"
               aria-expanded={isOpen}
             >

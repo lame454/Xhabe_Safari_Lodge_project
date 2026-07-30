@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 import Button from "@/components/Button";
+import RoomPhotoGrid from "@/components/RoomPhotoGrid";
+import StickyBookCta from "@/components/StickyBookCta";
 import { Bed, Eye, Wind, Wifi, Lock, Droplets, Bath } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -100,12 +103,16 @@ export default function AccommodationPage() {
                 What's Included in Every Chalet
               </h3>
               <ul className="space-y-4">
+                {/* Informational checklist — nothing to link to, so these get a
+                    hover/press response rather than being made into links. */}
                 {roomAmenities.map(({ icon: Icon, label }) => (
-                  <li key={label} className="flex items-center gap-4">
-                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-accent-amber/10 flex-shrink-0">
-                      <Icon className="w-4 h-4 text-accent-amber" />
+                  <li key={label} className="flex items-center gap-4 group">
+                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-accent-amber/10 flex-shrink-0 transition-colors duration-300 group-hover:bg-accent-amber">
+                      <Icon className="w-4 h-4 text-accent-amber transition-colors duration-300 group-hover:text-white" />
                     </span>
-                    <span className="font-body text-sm text-base-dark/80">{label}</span>
+                    <span className="font-body text-sm text-base-dark/80 transition-colors duration-300 group-hover:text-base-dark">
+                      {label}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -117,19 +124,14 @@ export default function AccommodationPage() {
       {/* PHOTO GRID */}
       <section className="py-4 bg-base-cream-light">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {galleryImages.map((img) => (
-              <div key={img.src} className="relative aspect-square overflow-hidden group">
-                <Image
-                  src={img.src}
-                  alt={img.alt}
-                  fill
-                  sizes="(max-width:768px) 50vw, 25vw"
-                  className="object-cover transition-transform duration-700 group-hover:scale-110"
-                />
-              </div>
-            ))}
-          </div>
+          <RoomPhotoGrid photos={galleryImages} />
+          <p className="font-body text-[11px] text-base-dark/45 text-center mt-4">
+            Tap any photo to view it larger — or{" "}
+            <Link href="/gallery" className="text-accent-amber hover:underline active:underline">
+              browse the full gallery
+            </Link>
+            .
+          </p>
         </div>
       </section>
 
@@ -205,6 +207,7 @@ export default function AccommodationPage() {
         </div>
       </section>
 
+      <StickyBookCta />
       <Footer />
     </>
   );

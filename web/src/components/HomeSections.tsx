@@ -1,8 +1,10 @@
 import Image from "next/image";
-import { Compass, Calendar, MapPin, Eye, Star } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, MapPin, MessageCircle, Star } from "lucide-react";
 import MapEmbed from "./MapEmbed";
 import Button from "./Button";
 import IconList from "./IconList";
+import { whatsappHref } from "@/lib/config/contact";
 
 // ==================== 1. ALTERNATING IMAGE/TEXT SECTION ====================
 interface AlternatingSectionProps {
@@ -26,20 +28,52 @@ export function AlternatingSection({
   ctaText,
   ctaHref,
 }: AlternatingSectionProps) {
+  // The image is decoration only when there's nowhere for it to lead. Where a
+  // CTA exists, the photo becomes a second route to the same page rather than
+  // sitting inert next to the button.
+  const imageBlock = (
+    <>
+      <Image
+        src={imagePath}
+        alt={imageAlt}
+        fill
+        sizes="(max-width: 1024px) 100vw, 50vw"
+        className="object-cover transition-transform duration-700 group-hover:scale-103 group-active:scale-103"
+      />
+      {ctaHref && (
+        <span
+          aria-hidden="true"
+          className="absolute inset-0 bg-base-dark/0 group-hover:bg-base-dark/20 group-active:bg-base-dark/25 transition-colors duration-300 flex items-end justify-end p-5"
+        >
+          {/* Carries its own backdrop so it stays legible on touch, where the
+              hover overlay behind it never appears. */}
+          <span className="affordance flex items-center gap-2 font-body text-[10px] uppercase tracking-widest text-white bg-base-dark/70 px-3 py-2">
+            {ctaText ?? "View more"}
+            <ArrowRight className="w-3.5 h-3.5" />
+          </span>
+        </span>
+      )}
+    </>
+  );
+
+  const imageWrapper = "w-full lg:w-1/2 relative h-[380px] md:h-[480px] overflow-hidden border border-base-dark/5 shadow-sm group";
+
   return (
     <section className="py-20 bg-base-light/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className={`flex flex-col lg:flex-row items-center gap-12 lg:gap-20 ${imageLeft ? "" : "lg:flex-row-reverse"}`}>
-          {/* Image Column */}
-          <div className="w-full lg:w-1/2 relative h-[380px] md:h-[480px] overflow-hidden border border-base-dark/5 shadow-sm group">
-            <Image
-              src={imagePath}
-              alt={imageAlt}
-              fill
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              className="object-cover transition-transform duration-700 group-hover:scale-103"
-            />
-          </div>
+          {/* Image Column — a link when the section has a destination */}
+          {ctaHref ? (
+            <Link
+              href={ctaHref}
+              aria-label={ctaText ? `${ctaText}: ${title}` : title}
+              className={`${imageWrapper} block focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber focus-visible:ring-offset-2`}
+            >
+              {imageBlock}
+            </Link>
+          ) : (
+            <div className={imageWrapper}>{imageBlock}</div>
+          )}
 
           {/* Text Column */}
           <div className="w-full lg:w-1/2 flex flex-col justify-center">
@@ -73,6 +107,14 @@ interface AmenityItem {
   title: string;
   description: string;
   icon: React.ComponentType<{ className?: string }>;
+  /**
+   * Page this highlight leads to. Optional so the component still renders a
+   * plain informational card, but every amenity on the homepage sets one —
+   * the section's job is to route visitors deeper into the site.
+   */
+  href?: string;
+  /** Overrides the default "Explore" affordance label. */
+  linkLabel?: string;
 }
 
 interface AmenityGridSectionProps {
@@ -101,12 +143,13 @@ export function AmenityGridSection({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
           {amenities.map((item, idx) => {
             const Icon = item.icon;
-            return (
-              <div
-                key={idx}
-                className="flex flex-col items-center p-8 bg-base-light/10 border border-base-dark/5 hover:border-accent-amber/30 transition duration-300 group"
-              >
-                <div className="p-4 bg-white rounded-full border border-base-dark/5 text-accent-amber mb-6 group-hover:bg-accent-amber group-hover:text-white transition duration-300">
+
+            // The whole card is the hit area, so the icon, heading, and body
+            // text are all tappable — a small "Learn more" link inside the card
+            // would be a fiddly target on a phone.
+            const card = (
+              <>
+                <div className="p-4 bg-white rounded-full border border-base-dark/5 text-accent-amber mb-6 group-hover:bg-accent-amber group-hover:text-white group-active:bg-accent-amber group-active:text-white group-hover:scale-105 transition duration-300">
                   <Icon className="w-6 h-6" />
                 </div>
                 <h3 className="font-display text-xl text-base-dark mb-3 font-medium">
@@ -115,7 +158,36 @@ export function AmenityGridSection({
                 <p className="font-body text-xs md:text-sm text-base-dark/70 leading-relaxed max-w-xs">
                   {item.description}
                 </p>
-              </div>
+                {item.href && (
+                  // Visible on touch, hover-revealed on pointer devices —
+                  // see `.affordance` in globals.css.
+                  <span className="affordance mt-5 flex items-center gap-1.5 font-body text-[10px] uppercase tracking-widest font-semibold text-accent-amber">
+                    {item.linkLabel ?? "Explore"}
+                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+                  </span>
+                )}
+              </>
+            );
+
+            const shared =
+              "flex flex-col items-center text-center p-8 bg-base-light/10 border border-base-dark/5 transition duration-300 group";
+
+            if (!item.href) {
+              return (
+                <div key={idx} className={shared}>
+                  {card}
+                </div>
+              );
+            }
+
+            return (
+              <Link
+                key={idx}
+                href={item.href}
+                className={`${shared} hover:border-accent-amber/40 hover:-translate-y-1 hover:shadow-md active:border-accent-amber/40 active:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber focus-visible:ring-offset-2`}
+              >
+                {card}
+              </Link>
             );
           })}
         </div>
@@ -223,11 +295,12 @@ export function LogisticsPanelSection({
                 Get Driving Directions
               </Button>
               <a
-                href="https://wa.me/26775497183"
+                href={whatsappHref("Hello Xhabe Safari Lodge, could you send me directions to the lodge?")}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center font-body text-xs font-semibold uppercase tracking-wider bg-[#25D366] text-white px-6 py-3.5 hover:bg-base-dark transition duration-300"
+                className="inline-flex items-center justify-center gap-2 font-body text-xs font-semibold uppercase tracking-wider bg-[#25D366] text-white px-6 py-3.5 hover:bg-base-dark active:bg-base-dark transition duration-300"
               >
+                <MessageCircle className="w-4 h-4" />
                 WhatsApp Us
               </a>
             </div>
