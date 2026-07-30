@@ -3,6 +3,7 @@ import { Star } from "lucide-react";
 import Footer from "@/components/Footer";
 import NavBar from "@/components/NavBar";
 import Button from "@/components/Button";
+import StickyBookCta from "@/components/StickyBookCta";
 import { getFeaturedTestimonials } from "@/lib/data/testimonials";
 
 export const metadata: Metadata = {
@@ -34,6 +35,6 @@ export default async function ReviewsPage() {
         </div>
       </section>
       <section className="py-20 text-center bg-white"><h2 className="font-display text-3xl text-base-dark">Ready for your own story?</h2><div className="mt-8"><Button href="/book" variant="primary" showArrow>Check Availability</Button></div></section>
-    </main><Footer />
+    </main><StickyBookCta /><Footer />
   </>;
 }
