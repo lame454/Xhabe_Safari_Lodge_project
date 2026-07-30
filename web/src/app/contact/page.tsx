@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import MapEmbed from "@/components/MapEmbed";
 import ContactForm from "@/components/ContactForm";
 import { Mail, Phone, MessageCircle, Clock, MapPin } from "lucide-react";
+import { CONTACT, mailtoHref, telHref, whatsappHref } from "@/lib/config/contact";
 
 export const metadata: Metadata = {
   title: "Contact Us | Xhabe Safari Lodge — Enquiries & Directions",
@@ -16,31 +17,31 @@ const contactDetails = [
   {
     icon: Mail,
     label: "Email",
-    value: "reservations@xhabesafarilodge.com",
-    href: "mailto:reservations@xhabesafarilodge.com",
+    value: CONTACT.email,
+    href: mailtoHref("Enquiry — Xhabe Safari Lodge"),
   },
   {
     icon: Phone,
     label: "Phone",
-    value: "+267 XXX XXXX",
-    href: "tel:+267XXXXXXXX",
+    value: CONTACT.phoneDisplay,
+    href: telHref(),
   },
   {
     icon: MessageCircle,
     label: "WhatsApp",
     value: "Message us on WhatsApp",
-    href: "https://wa.me/267XXXXXXXX",
+    href: whatsappHref("Hello Xhabe Safari Lodge, I'd like to enquire about a stay."),
   },
   {
     icon: Clock,
     label: "Response Time",
-    value: "We reply within 24 hours",
+    value: CONTACT.responseTime,
     href: null,
   },
   {
     icon: MapPin,
     label: "Address",
-    value: "Ngoma Road, Mabele Village, Chobe District, Botswana",
+    value: CONTACT.addressOneLine,
     href: null,
   },
 ];

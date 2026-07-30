@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Mail, Phone, MapPin, Facebook, Instagram, ShieldAlert } from "lucide-react";
+import { Mail, Phone, MessageCircle, MapPin, Facebook, Instagram } from "lucide-react";
+import { CONTACT, mailtoHref, telHref, whatsappHref } from "@/lib/config/contact";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -24,22 +25,31 @@ export default function Footer() {
             {/* Social Icons */}
             <div className="flex space-x-4 pt-2">
               <a
-                href="https://facebook.com/xhabesafarilodge"
+                href={CONTACT.social.facebook}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 bg-white/5 hover:bg-accent-amber transition duration-300 rounded-full"
-                aria-label="Facebook Page"
+                className="p-2 bg-white/5 hover:bg-accent-amber active:bg-accent-amber transition duration-300 rounded-full"
+                aria-label="Xhabe Safari Lodge on Facebook"
               >
                 <Facebook className="w-5 h-5 text-white" />
               </a>
               <a
-                href="https://instagram.com"
+                href={CONTACT.social.instagram}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 bg-white/5 hover:bg-accent-amber transition duration-300 rounded-full"
-                aria-label="Instagram Page"
+                className="p-2 bg-white/5 hover:bg-accent-amber active:bg-accent-amber transition duration-300 rounded-full"
+                aria-label="Xhabe Safari Lodge on Instagram"
               >
                 <Instagram className="w-5 h-5 text-white" />
+              </a>
+              <a
+                href={whatsappHref()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 bg-white/5 hover:bg-[#25D366] active:bg-[#25D366] transition duration-300 rounded-full"
+                aria-label="Message Xhabe Safari Lodge on WhatsApp"
+              >
+                <MessageCircle className="w-5 h-5 text-white" />
               </a>
             </div>
           </div>
@@ -47,13 +57,25 @@ export default function Footer() {
           {/* Column 2: Quick Links */}
           <div className="flex flex-col space-y-4">
             <h4 className="font-display text-lg tracking-wider text-base-cream">Explore</h4>
-            <div className="grid grid-cols-2 gap-2 text-sm font-body text-white/80">
-              <Link href="/about" className="hover:text-accent-amber transition">About Us</Link>
-              <Link href="/accommodation" className="hover:text-accent-amber transition">Accommodation</Link>
-              <Link href="/activities" className="hover:text-accent-amber transition">Activities</Link>
-              <Link href="/gallery" className="hover:text-accent-amber transition">Gallery</Link>
-              <Link href="/reviews" className="hover:text-accent-amber transition">Guest Reviews</Link>
-              <Link href="/contact" className="hover:text-accent-amber transition">Contact</Link>
+            {/* py-1.5 keeps these comfortably tappable on a phone. */}
+            <div className="grid grid-cols-2 gap-x-2 text-sm font-body text-white/80">
+              {[
+                { href: "/about", label: "About Us" },
+                { href: "/accommodation", label: "Accommodation" },
+                { href: "/activities", label: "Activities" },
+                { href: "/packages", label: "Packages & Rates" },
+                { href: "/gallery", label: "Gallery" },
+                { href: "/reviews", label: "Guest Reviews" },
+                { href: "/contact", label: "Contact" },
+              ].map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="py-1.5 hover:text-accent-amber active:text-accent-amber transition"
+                >
+                  {link.label}
+                </Link>
+              ))}
             </div>
           </div>
 
@@ -63,24 +85,33 @@ export default function Footer() {
             <ul className="space-y-3 text-sm font-body text-white/80">
               <li className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-accent-amber shrink-0 mt-0.5" />
-                <span>
-                  Plot 1504, Muchenje, Chobe Region, Ngoma, Botswana
-                </span>
+                <span>{CONTACT.addressLines.join(", ")}</span>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-accent-amber shrink-0" />
-                <a href="mailto:reservations@xhabesafarilodge.com" className="hover:text-accent-amber transition">
-                  reservations@xhabesafarilodge.com
+                <a href={mailtoHref()} className="hover:text-accent-amber active:text-accent-amber transition">
+                  {CONTACT.email}
                 </a>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-accent-amber shrink-0" />
-                <a href="tel:+26775497183" className="hover:text-accent-amber transition">
-                  +267 75 497 183
+                <a href={telHref()} className="hover:text-accent-amber active:text-accent-amber transition">
+                  {CONTACT.phoneDisplay}
+                </a>
+              </li>
+              <li className="flex items-center gap-3">
+                <MessageCircle className="w-5 h-5 text-accent-amber shrink-0" />
+                <a
+                  href={whatsappHref()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-accent-amber active:text-accent-amber transition"
+                >
+                  WhatsApp us
                 </a>
               </li>
               <li className="text-[11px] text-white/50 pt-1">
-                Post: P.O. Box 90, Kasane, Botswana
+                Post: {CONTACT.postalAddress}
               </li>
             </ul>
           </div>

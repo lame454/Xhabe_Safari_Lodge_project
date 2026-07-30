@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/server";
+import { sendEnquiryNotificationEmail } from "@/lib/email";
 
 const enquirySchema = z.object({
   firstName: z.string().trim().min(1, "First name is required."),
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
     data.message ? `\n${data.message}` : null,
   ].filter(Boolean);
 
-  const supabase = await createAdminClient();
+  const supabase = createAdminClient();
   const { data: inserted, error } = await supabase
     .from("enquiries")
     .insert({
@@ -55,6 +56,8 @@ export async function POST(request: NextRequest) {
     console.error("Failed to insert enquiry:", error);
     return NextResponse.json({ error: "Could not send your enquiry. Please try again." }, { status: 500 });
   }
+
+  await sendEnquiryNotificationEmail(inserted);
 
   return NextResponse.json({ enquiry: inserted }, { status: 201 });
 }

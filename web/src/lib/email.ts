@@ -1,7 +1,21 @@
 import { Resend } from "resend";
 import type { BookingRow } from "@/lib/data/types";
+import { CONTACT } from "@/lib/config/contact";
 
-const FROM_ADDRESS = process.env.RESEND_FROM_EMAIL ?? "Xhabe Safari Lodge <reservations@xhabesafarilodge.com>";
+/*
+ * TODO: swap to production sender before launch — see src/lib/config/contact.ts.
+ *
+ * Resend will only send from a domain you have verified, so the test inbox in
+ * CONTACT.email cannot be used as the `from` address. Until the lodge's own
+ * domain is verified, RESEND_FROM_EMAIL should be left unset so this falls
+ * back to Resend's shared onboarding sender (which delivers to the Resend
+ * account owner's address only — enough to test the flow).
+ *
+ * Replies and the lodge's own booking notifications both go to CONTACT.email,
+ * so the test inbox still receives every booking.
+ */
+const FROM_ADDRESS =
+  process.env.RESEND_FROM_EMAIL ?? "Xhabe Safari Lodge <onboarding@resend.dev>";
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr + "T00:00:00Z").toLocaleDateString("en-GB", {
@@ -53,7 +67,8 @@ export async function sendBookingConfirmationEmail(
         team will personally get back to you.
       </p>
       <p style="font-size: 12px; color: #8a7e6d; margin-top: 32px;">
-        Xhabe Safari Lodge · Ngoma Road, Mabele Village, Chobe District, Botswana
+        Xhabe Safari Lodge · ${CONTACT.addressOneLine}<br />
+        ${CONTACT.email} · ${CONTACT.phoneDisplay}
       </p>
     </div>
   `;
@@ -62,6 +77,7 @@ export async function sendBookingConfirmationEmail(
     const { error } = await resend.emails.send({
       from: FROM_ADDRESS,
       to: booking.email,
+      replyTo: CONTACT.email,
       subject,
       html,
     });
@@ -69,9 +85,86 @@ export async function sendBookingConfirmationEmail(
       console.error("Resend error sending booking confirmation:", error);
       return { sent: false };
     }
-    return { sent: true };
   } catch (err) {
     console.error("Failed to send booking confirmation email:", err);
+    return { sent: false };
+  }
+
+  // Notify the lodge separately, so a failure to reach the team never affects
+  // the guest-facing confirmation that has already gone out.
+  try {
+    await resend.emails.send({
+      from: FROM_ADDRESS,
+      to: CONTACT.email,
+      replyTo: booking.email,
+      subject: `New booking request — ${booking.first_name} ${booking.last_name}, ${formatDate(booking.check_in)}`,
+      html: `
+        <div style="font-family: Georgia, serif; max-width: 560px; color: #2b2620;">
+          <h1 style="font-size: 20px;">New booking request</h1>
+          <table style="font-size: 14px; line-height: 1.8;">
+            <tr><td style="padding-right: 16px; color: #8a7e6d;">Guest</td><td>${booking.first_name} ${booking.last_name}</td></tr>
+            <tr><td style="padding-right: 16px; color: #8a7e6d;">Email</td><td>${booking.email}</td></tr>
+            <tr><td style="padding-right: 16px; color: #8a7e6d;">Package</td><td>${packageName ?? "Not specified"}</td></tr>
+            <tr><td style="padding-right: 16px; color: #8a7e6d;">Check-in</td><td>${formatDate(booking.check_in)}</td></tr>
+            <tr><td style="padding-right: 16px; color: #8a7e6d;">Check-out</td><td>${formatDate(booking.check_out)}</td></tr>
+            <tr><td style="padding-right: 16px; color: #8a7e6d;">Guests</td><td>${booking.guests}</td></tr>
+            <tr><td style="padding-right: 16px; color: #8a7e6d;">Reference</td><td>${booking.id}</td></tr>
+          </table>
+          ${booking.details ? `<p style="font-size: 14px; line-height: 1.7;"><strong>Requests:</strong> ${booking.details}</p>` : ""}
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error("Failed to send lodge booking notification:", err);
+  }
+
+  return { sent: true };
+}
+
+/**
+ * Notifies the lodge that a website enquiry came in.
+ *
+ * Best-effort: the enquiry is already persisted by the time this runs, so a
+ * mail failure is logged but never surfaced as a request failure.
+ */
+export async function sendEnquiryNotificationEmail(enquiry: {
+  id: string;
+  name: string;
+  email: string;
+  message: string;
+}) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.warn("RESEND_API_KEY not set — skipping enquiry notification email.");
+    return { sent: false };
+  }
+
+  try {
+    const resend = new Resend(apiKey);
+    const { error } = await resend.emails.send({
+      from: FROM_ADDRESS,
+      to: CONTACT.email,
+      replyTo: enquiry.email,
+      subject: `New website enquiry — ${enquiry.name}`,
+      html: `
+        <div style="font-family: Georgia, serif; max-width: 560px; color: #2b2620;">
+          <h1 style="font-size: 20px;">New website enquiry</h1>
+          <table style="font-size: 14px; line-height: 1.8;">
+            <tr><td style="padding-right: 16px; color: #8a7e6d;">From</td><td>${enquiry.name}</td></tr>
+            <tr><td style="padding-right: 16px; color: #8a7e6d;">Email</td><td>${enquiry.email}</td></tr>
+            <tr><td style="padding-right: 16px; color: #8a7e6d;">Reference</td><td>${enquiry.id}</td></tr>
+          </table>
+          <pre style="font-family: inherit; font-size: 14px; line-height: 1.7; white-space: pre-wrap;">${enquiry.message}</pre>
+        </div>
+      `,
+    });
+    if (error) {
+      console.error("Resend error sending enquiry notification:", error);
+      return { sent: false };
+    }
+    return { sent: true };
+  } catch (err) {
+    console.error("Failed to send enquiry notification email:", err);
     return { sent: false };
   }
 }
