@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const supabase = await createAdminClient();
+  const supabase = createAdminClient();
 
   const { data: inserted, error } = await supabase
     .from("bookings")
@@ -110,6 +110,22 @@ export async function POST(request: NextRequest) {
 
   if (error || !inserted) {
     console.error("Failed to insert booking:", error);
+
+    // The `bookings_capacity_guard` trigger raises a check_violation when the
+    // stay would oversell the lodge. That happens when another booking landed
+    // between the availability check above and this insert, so it's a genuine
+    // conflict rather than a server fault — report it as one.
+    if (error?.code === "23514") {
+      return NextResponse.json(
+        {
+          error:
+            "Those dates were just taken while you were filling in the form. " +
+            "Please re-check availability and try again.",
+        },
+        { status: 409 }
+      );
+    }
+
     return NextResponse.json({ error: "Could not save your booking. Please try again." }, { status: 500 });
   }
 

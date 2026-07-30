@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/server";
 import type { StaffRow } from "./types";
 
 export const FALLBACK_STAFF: StaffRow[] = [
@@ -30,17 +30,22 @@ export const FALLBACK_STAFF: StaffRow[] = [
 
 export async function getStaff(): Promise<{ staff: StaffRow[]; isLive: boolean }> {
   try {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("staff")
       .select("*")
       .order("created_at", { ascending: true });
 
-    if (error || !data || data.length === 0) {
+    if (error) {
+      console.error("Staff query failed, serving fallback staff:", error.message);
+      return { staff: FALLBACK_STAFF, isLive: false };
+    }
+    if (!data || data.length === 0) {
       return { staff: FALLBACK_STAFF, isLive: false };
     }
     return { staff: data as StaffRow[], isLive: true };
-  } catch {
+  } catch (err) {
+    console.error("Staff query threw, serving fallback staff:", err);
     return { staff: FALLBACK_STAFF, isLive: false };
   }
 }

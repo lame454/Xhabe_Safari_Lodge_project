@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/server";
 import type { TestimonialRow } from "./types";
 
 export const FALLBACK_TESTIMONIALS: TestimonialRow[] = [
@@ -29,7 +29,7 @@ export async function getFeaturedTestimonials(
   limit = 3
 ): Promise<{ testimonials: TestimonialRow[]; isLive: boolean }> {
   try {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("testimonials")
       .select("*")
@@ -37,11 +37,16 @@ export async function getFeaturedTestimonials(
       .order("created_at", { ascending: false })
       .limit(limit);
 
-    if (error || !data || data.length === 0) {
+    if (error) {
+      console.error("Testimonials query failed, serving fallback quotes:", error.message);
+      return { testimonials: FALLBACK_TESTIMONIALS.slice(0, limit), isLive: false };
+    }
+    if (!data || data.length === 0) {
       return { testimonials: FALLBACK_TESTIMONIALS.slice(0, limit), isLive: false };
     }
     return { testimonials: data as TestimonialRow[], isLive: true };
-  } catch {
+  } catch (err) {
+    console.error("Testimonials query threw, serving fallback quotes:", err);
     return { testimonials: FALLBACK_TESTIMONIALS.slice(0, limit), isLive: false };
   }
 }
