@@ -1,12 +1,10 @@
-import { createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient, createPublicClient } from "@/lib/supabase/server";
+import { MAX_ADULTS_PER_CHALET, TOTAL_CHALETS, roomsNeeded } from "./capacity";
 
-/** Xhabe has 8 luxury tented chalets, max 2 adults per chalet. */
-export const TOTAL_CHALETS = 8;
-export const MAX_ADULTS_PER_CHALET = 2;
-
-export function roomsNeeded(guests: number): number {
-  return Math.max(1, Math.ceil(guests / MAX_ADULTS_PER_CHALET));
-}
+// Re-exported for existing server-side callers. Client components must import
+// these from "./capacity" directly — this module reaches for the service-role
+// Supabase client and cannot be bundled for the browser.
+export { MAX_ADULTS_PER_CHALET, TOTAL_CHALETS, roomsNeeded };
 
 /** All calendar dates from checkIn (inclusive) to checkOut (exclusive) — i.e. the nights stayed. */
 function nightsInRange(checkIn: string, checkOut: string): string[] {
@@ -17,6 +15,70 @@ function nightsInRange(checkIn: string, checkOut: string): string[] {
     dates.push(d.toISOString().slice(0, 10));
   }
   return dates;
+}
+
+/** Inclusive list of dates from `from` to `to`. */
+function datesInclusive(from: string, to: string): string[] {
+  const dates: string[] = [];
+  const end = new Date(to + "T00:00:00Z");
+  for (let d = new Date(from + "T00:00:00Z"); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+    dates.push(d.toISOString().slice(0, 10));
+  }
+  return dates;
+}
+
+export interface DayAvailability {
+  date: string;
+  /** Chalets released for this night — the override, or TOTAL_CHALETS. */
+  capacity: number;
+  /** Chalets still free after committed bookings. */
+  roomsRemaining: number;
+}
+
+/**
+ * Per-night capacity across a date window, for the booking calendar.
+ *
+ * Returns one entry per calendar day so the UI can distinguish fully booked
+ * (`roomsRemaining === 0`) from partially booked (some chalets gone, others
+ * free) — the two look different on the calendar.
+ *
+ * Delegates to the `availability_calendar` RPC, which aggregates `bookings`
+ * inside the database and returns counts only. That keeps guest data out of the
+ * response and means the public calendar works with the publishable key alone —
+ * the service role key is only needed to write bookings. See
+ * supabase/migrations/20260730140000_availability_calendar_rpc.sql.
+ */
+export async function getAvailabilityCalendar(
+  from: string,
+  to: string
+): Promise<{ days: DayAvailability[]; serviceError: boolean }> {
+  if (datesInclusive(from, to).length === 0) return { days: [], serviceError: false };
+
+  try {
+    const supabase = createPublicClient();
+    const { data, error } = await supabase.rpc("availability_calendar", {
+      from_date: from,
+      to_date: to,
+    });
+
+    if (error) {
+      console.error("Availability calendar RPC failed:", error.message);
+      return { days: [], serviceError: true };
+    }
+
+    const days = (data ?? []).map(
+      (row: { date: string; capacity: number; rooms_remaining: number }) => ({
+        date: row.date,
+        capacity: row.capacity,
+        roomsRemaining: row.rooms_remaining,
+      })
+    );
+
+    return { days, serviceError: false };
+  } catch (err) {
+    console.error("Availability calendar RPC threw:", err);
+    return { days: [], serviceError: true };
+  }
 }
 
 export interface AvailabilityResult {
@@ -47,7 +109,7 @@ export async function checkAvailability(
   const needed = roomsNeeded(guests);
 
   try {
-    const supabase = await createAdminClient();
+    const supabase = createAdminClient();
 
   // Per-date capacity overrides.
     const { data: availabilityRows } = await supabase

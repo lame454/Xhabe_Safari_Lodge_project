@@ -2,33 +2,58 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import AvailabilityCalendar from "./AvailabilityCalendar";
+import { MAX_ADULTS_PER_CHALET, TOTAL_CHALETS, roomsNeeded as chaletsFor } from "@/lib/data/capacity";
 import type { PackageRow } from "@/lib/data/types";
 
 interface Props {
   packages: PackageRow[];
+  /** Row id to preselect, set when the visitor arrived from a package page. */
+  preselectedPackageId?: string;
 }
 
 type Status = "idle" | "checking" | "available" | "unavailable" | "submitting" | "error";
 
-export default function BookingForm({ packages }: Props) {
+export default function BookingForm({ packages, preselectedPackageId }: Props) {
   const router = useRouter();
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState<string | null>(null);
-  const today = new Date().toISOString().slice(0, 10);
+
+  // Dates live in React state rather than in the DOM, because the calendar and
+  // the guest count both need to react to them.
+  const [checkIn, setCheckIn] = useState<string | null>(null);
+  const [checkOut, setCheckOut] = useState<string | null>(null);
+  const [guests, setGuests] = useState(2);
+
+  const roomsNeeded = chaletsFor(guests);
+  const datesChosen = Boolean(checkIn && checkOut);
+
+  /** Any change to dates or party size invalidates a previous availability result. */
+  function resetCheck() {
+    setStatus("idle");
+    setMessage(null);
+  }
+
+  function handleRangeChange(range: { checkIn: string | null; checkOut: string | null }) {
+    setCheckIn(range.checkIn);
+    setCheckOut(range.checkOut);
+    resetCheck();
+  }
 
   async function handleCheckAvailability(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const form = e.currentTarget;
-    const fd = new FormData(form);
-    const checkIn = String(fd.get("checkIn") ?? "");
-    const checkOut = String(fd.get("checkOut") ?? "");
-    const guests = String(fd.get("guests") ?? "2");
+
+    if (!checkIn || !checkOut) {
+      setStatus("error");
+      setMessage("Pick your check-in and check-out dates on the calendar first.");
+      return;
+    }
 
     setStatus("checking");
     setMessage(null);
 
     try {
-      const params = new URLSearchParams({ checkIn, checkOut, guests });
+      const params = new URLSearchParams({ checkIn, checkOut, guests: String(guests) });
       const res = await fetch(`/api/bookings?${params.toString()}`);
       const body = await res.json();
 
@@ -57,9 +82,9 @@ export default function BookingForm({ packages }: Props) {
     const fd = new FormData(form);
 
     const payload = {
-      checkIn: String(fd.get("checkIn") ?? ""),
-      checkOut: String(fd.get("checkOut") ?? ""),
-      guests: Number(fd.get("guests") ?? 2),
+      checkIn: checkIn ?? "",
+      checkOut: checkOut ?? "",
+      guests,
       packageId: String(fd.get("packageId") ?? "") || undefined,
       firstName: String(fd.get("firstName") ?? ""),
       lastName: String(fd.get("lastName") ?? ""),
@@ -99,52 +124,42 @@ export default function BookingForm({ packages }: Props) {
       onSubmit={canSubmit ? handleSubmitBooking : handleCheckAvailability}
       className="space-y-6 bg-white border border-base-dark/10 p-8"
     >
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="checkIn" className="font-body text-xs uppercase tracking-wider text-base-dark/50 font-semibold">
-            Check-in *
-          </label>
-          <input
-            id="checkIn"
-            name="checkIn"
-            type="date"
-            required
-            min={today}
-            onChange={() => setStatus("idle")}
-            className="font-body text-sm border border-base-dark/20 bg-white px-4 py-3 focus:outline-none focus:border-accent-amber"
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="checkOut" className="font-body text-xs uppercase tracking-wider text-base-dark/50 font-semibold">
-            Check-out *
-          </label>
-          <input
-            id="checkOut"
-            name="checkOut"
-            type="date"
-            required
-            min={today}
-            onChange={() => setStatus("idle")}
-            className="font-body text-sm border border-base-dark/20 bg-white px-4 py-3 focus:outline-none focus:border-accent-amber"
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="guests" className="font-body text-xs uppercase tracking-wider text-base-dark/50 font-semibold">
-            Guests *
-          </label>
-          <input
-            id="guests"
-            name="guests"
-            type="number"
-            min={1}
-            max={16}
-            defaultValue={2}
-            required
-            onChange={() => setStatus("idle")}
-            className="font-body text-sm border border-base-dark/20 bg-white px-4 py-3 focus:outline-none focus:border-accent-amber"
-          />
-        </div>
+      {/* Party size first — it changes which nights the calendar can offer. */}
+      <div className="flex flex-col gap-2 sm:max-w-[220px]">
+        <label htmlFor="guests" className="font-body text-xs uppercase tracking-wider text-base-dark/50 font-semibold">
+          Guests *
+        </label>
+        <input
+          id="guests"
+          name="guests"
+          type="number"
+          min={1}
+          max={TOTAL_CHALETS * MAX_ADULTS_PER_CHALET}
+          value={guests}
+          required
+          onChange={(event) => {
+            setGuests(Number(event.target.value) || 1);
+            resetCheck();
+          }}
+          className="font-body text-sm border border-base-dark/20 bg-white px-4 py-3 focus:outline-none focus:border-accent-amber"
+        />
+        <p className="font-body text-[11px] text-base-dark/45 leading-snug">
+          {guests} {guests === 1 ? "guest" : "guests"} needs {roomsNeeded}{" "}
+          {roomsNeeded === 1 ? "chalet" : "chalets"} ({MAX_ADULTS_PER_CHALET} adults per chalet).
+        </p>
       </div>
+
+      <fieldset className="flex flex-col gap-2">
+        <legend className="font-body text-xs uppercase tracking-wider text-base-dark/50 font-semibold mb-2">
+          Your dates *
+        </legend>
+        <AvailabilityCalendar
+          roomsNeeded={roomsNeeded}
+          checkIn={checkIn}
+          checkOut={checkOut}
+          onChange={handleRangeChange}
+        />
+      </fieldset>
 
       <div className="flex flex-col gap-2">
         <label htmlFor="packageId" className="font-body text-xs uppercase tracking-wider text-base-dark/50 font-semibold">
@@ -153,6 +168,7 @@ export default function BookingForm({ packages }: Props) {
         <select
           id="packageId"
           name="packageId"
+          defaultValue={preselectedPackageId ?? ""}
           className="font-body text-sm border border-base-dark/20 bg-white px-4 py-3 focus:outline-none focus:border-accent-amber appearance-none"
         >
           <option value="">Not sure yet</option>
@@ -250,7 +266,7 @@ export default function BookingForm({ packages }: Props) {
 
       <button
         type="submit"
-        disabled={status === "checking" || status === "submitting"}
+        disabled={status === "checking" || status === "submitting" || !datesChosen}
         className="w-full bg-accent-amber text-base-dark font-body text-xs font-bold uppercase tracking-[0.15em] px-8 py-4 hover:bg-accent-amber/90 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {status === "checking"
@@ -259,7 +275,9 @@ export default function BookingForm({ packages }: Props) {
           ? "Submitting…"
           : canSubmit
           ? "Submit Booking Request"
-          : "Check Availability"}
+          : datesChosen
+          ? "Check Availability"
+          : "Select your dates above"}
       </button>
     </form>
   );
