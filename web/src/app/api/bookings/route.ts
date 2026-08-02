@@ -139,12 +139,17 @@ export async function POST(request: NextRequest) {
     packageName = pkg?.name;
   }
 
-  const { sent } = await sendBookingConfirmationEmail(inserted, packageName);
+  // The booking is already saved; email is best-effort. Both outcomes are
+  // reported rather than collapsed into one flag, because a guest confirmation
+  // that bounced and a lodge notification that never arrived are different
+  // problems — the second means nobody knows the booking exists.
+  const { guestSent, lodgeSent } = await sendBookingConfirmationEmail(inserted, packageName);
 
   return NextResponse.json(
     {
       booking: inserted,
-      emailSent: sent,
+      emailSent: guestSent,
+      lodgeNotified: lodgeSent,
     },
     { status: 201 }
   );

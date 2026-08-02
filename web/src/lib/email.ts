@@ -3,16 +3,18 @@ import type { BookingRow } from "@/lib/data/types";
 import { CONTACT } from "@/lib/config/contact";
 
 /*
- * TODO: swap to production sender before launch — see src/lib/config/contact.ts.
+ * TODO: VERIFY A SENDING DOMAIN IN RESEND BEFORE LAUNCH.
  *
- * Resend will only send from a domain you have verified, so the test inbox in
- * CONTACT.email cannot be used as the `from` address. Until the lodge's own
- * domain is verified, RESEND_FROM_EMAIL should be left unset so this falls
- * back to Resend's shared onboarding sender (which delivers to the Resend
- * account owner's address only — enough to test the flow).
+ * Resend only sends from a domain you have verified. With RESEND_FROM_EMAIL
+ * unset this falls back to Resend's shared onboarding sender, which refuses
+ * every recipient except the Resend account owner's own address — confirmed
+ * against the live API as knightlame454@gmail.com, which is *not* the test
+ * inbox in CONTACT.email. Both the guest confirmation and the lodge
+ * notification are currently rejected with a 403.
  *
- * Replies and the lodge's own booking notifications both go to CONTACT.email,
- * so the test inbox still receives every booking.
+ * Nothing in the code can work around this; it is an account setting. Verify a
+ * domain at resend.com/domains, then set RESEND_FROM_EMAIL to an address on it.
+ * Until then, assume no booking or enquiry email reaches anyone.
  */
 const FROM_ADDRESS =
   process.env.RESEND_FROM_EMAIL ?? "Xhabe Safari Lodge <onboarding@resend.dev>";
@@ -26,11 +28,46 @@ function formatDate(dateStr: string): string {
   });
 }
 
+interface Message {
+  to: string;
+  replyTo: string;
+  subject: string;
+  html: string;
+}
+
 /**
- * Sends a booking-request confirmation email to the guest.
- * Silently no-ops (logging a warning) if RESEND_API_KEY isn't configured,
- * so local/dev environments and the request flow itself never break
- * because of missing email credentials.
+ * Sends one message, reporting whether the provider accepted it.
+ *
+ * Resend reports rejections by *returning* an `error` rather than throwing —
+ * a 403 from an unverified sending domain comes back this way — so both the
+ * returned error and a thrown one have to be handled or the failure is
+ * invisible. Never throws: a booking that is already saved must not fail the
+ * request because its email bounced.
+ */
+async function send(resend: Resend, label: string, message: Message): Promise<boolean> {
+  try {
+    const { error } = await resend.emails.send({ from: FROM_ADDRESS, ...message });
+    if (error) {
+      console.error(`Resend rejected the ${label} to ${message.to}:`, error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error(`Failed to send the ${label} to ${message.to}:`, err);
+    return false;
+  }
+}
+
+/**
+ * Emails a booking to the guest (confirmation) and to the lodge (notification).
+ *
+ * The two are sent independently and neither gates the other: the lodge finding
+ * out that a booking exists is the more important of the two, and must not be
+ * lost because the guest's confirmation bounced. Reports each outcome
+ * separately so the caller can tell which, if either, got through.
+ *
+ * No-ops with a warning if RESEND_API_KEY isn't configured, so local
+ * development and the request itself never break for want of mail credentials.
  */
 export async function sendBookingConfirmationEmail(
   booking: Pick<
@@ -38,11 +75,11 @@ export async function sendBookingConfirmationEmail(
     "id" | "first_name" | "last_name" | "email" | "check_in" | "check_out" | "guests" | "details"
   >,
   packageName?: string
-) {
+): Promise<{ guestSent: boolean; lodgeSent: boolean }> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
-    console.warn("RESEND_API_KEY not set — skipping booking confirmation email.");
-    return { sent: false };
+    console.warn("RESEND_API_KEY not set — skipping booking emails.");
+    return { guestSent: false, lodgeSent: false };
   }
 
   const resend = new Resend(apiKey);
@@ -73,52 +110,38 @@ export async function sendBookingConfirmationEmail(
     </div>
   `;
 
-  try {
-    const { error } = await resend.emails.send({
-      from: FROM_ADDRESS,
+  const lodgeHtml = `
+    <div style="font-family: Georgia, serif; max-width: 560px; color: #2b2620;">
+      <h1 style="font-size: 20px;">New booking request</h1>
+      <table style="font-size: 14px; line-height: 1.8;">
+        <tr><td style="padding-right: 16px; color: #8a7e6d;">Guest</td><td>${booking.first_name} ${booking.last_name}</td></tr>
+        <tr><td style="padding-right: 16px; color: #8a7e6d;">Email</td><td>${booking.email}</td></tr>
+        <tr><td style="padding-right: 16px; color: #8a7e6d;">Package</td><td>${packageName ?? "Not specified"}</td></tr>
+        <tr><td style="padding-right: 16px; color: #8a7e6d;">Check-in</td><td>${formatDate(booking.check_in)}</td></tr>
+        <tr><td style="padding-right: 16px; color: #8a7e6d;">Check-out</td><td>${formatDate(booking.check_out)}</td></tr>
+        <tr><td style="padding-right: 16px; color: #8a7e6d;">Guests</td><td>${booking.guests}</td></tr>
+        <tr><td style="padding-right: 16px; color: #8a7e6d;">Reference</td><td>${booking.id}</td></tr>
+      </table>
+      ${booking.details ? `<p style="font-size: 14px; line-height: 1.7;"><strong>Requests:</strong> ${booking.details}</p>` : ""}
+    </div>
+  `;
+
+  const [guestSent, lodgeSent] = await Promise.all([
+    send(resend, "guest booking confirmation", {
       to: booking.email,
       replyTo: CONTACT.email,
       subject,
       html,
-    });
-    if (error) {
-      console.error("Resend error sending booking confirmation:", error);
-      return { sent: false };
-    }
-  } catch (err) {
-    console.error("Failed to send booking confirmation email:", err);
-    return { sent: false };
-  }
-
-  // Notify the lodge separately, so a failure to reach the team never affects
-  // the guest-facing confirmation that has already gone out.
-  try {
-    await resend.emails.send({
-      from: FROM_ADDRESS,
+    }),
+    send(resend, "lodge booking notification", {
       to: CONTACT.email,
       replyTo: booking.email,
       subject: `New booking request — ${booking.first_name} ${booking.last_name}, ${formatDate(booking.check_in)}`,
-      html: `
-        <div style="font-family: Georgia, serif; max-width: 560px; color: #2b2620;">
-          <h1 style="font-size: 20px;">New booking request</h1>
-          <table style="font-size: 14px; line-height: 1.8;">
-            <tr><td style="padding-right: 16px; color: #8a7e6d;">Guest</td><td>${booking.first_name} ${booking.last_name}</td></tr>
-            <tr><td style="padding-right: 16px; color: #8a7e6d;">Email</td><td>${booking.email}</td></tr>
-            <tr><td style="padding-right: 16px; color: #8a7e6d;">Package</td><td>${packageName ?? "Not specified"}</td></tr>
-            <tr><td style="padding-right: 16px; color: #8a7e6d;">Check-in</td><td>${formatDate(booking.check_in)}</td></tr>
-            <tr><td style="padding-right: 16px; color: #8a7e6d;">Check-out</td><td>${formatDate(booking.check_out)}</td></tr>
-            <tr><td style="padding-right: 16px; color: #8a7e6d;">Guests</td><td>${booking.guests}</td></tr>
-            <tr><td style="padding-right: 16px; color: #8a7e6d;">Reference</td><td>${booking.id}</td></tr>
-          </table>
-          ${booking.details ? `<p style="font-size: 14px; line-height: 1.7;"><strong>Requests:</strong> ${booking.details}</p>` : ""}
-        </div>
-      `,
-    });
-  } catch (err) {
-    console.error("Failed to send lodge booking notification:", err);
-  }
+      html: lodgeHtml,
+    }),
+  ]);
 
-  return { sent: true };
+  return { guestSent, lodgeSent };
 }
 
 /**
@@ -139,32 +162,22 @@ export async function sendEnquiryNotificationEmail(enquiry: {
     return { sent: false };
   }
 
-  try {
-    const resend = new Resend(apiKey);
-    const { error } = await resend.emails.send({
-      from: FROM_ADDRESS,
-      to: CONTACT.email,
-      replyTo: enquiry.email,
-      subject: `New website enquiry — ${enquiry.name}`,
-      html: `
-        <div style="font-family: Georgia, serif; max-width: 560px; color: #2b2620;">
-          <h1 style="font-size: 20px;">New website enquiry</h1>
-          <table style="font-size: 14px; line-height: 1.8;">
-            <tr><td style="padding-right: 16px; color: #8a7e6d;">From</td><td>${enquiry.name}</td></tr>
-            <tr><td style="padding-right: 16px; color: #8a7e6d;">Email</td><td>${enquiry.email}</td></tr>
-            <tr><td style="padding-right: 16px; color: #8a7e6d;">Reference</td><td>${enquiry.id}</td></tr>
-          </table>
-          <pre style="font-family: inherit; font-size: 14px; line-height: 1.7; white-space: pre-wrap;">${enquiry.message}</pre>
-        </div>
-      `,
-    });
-    if (error) {
-      console.error("Resend error sending enquiry notification:", error);
-      return { sent: false };
-    }
-    return { sent: true };
-  } catch (err) {
-    console.error("Failed to send enquiry notification email:", err);
-    return { sent: false };
-  }
+  const sent = await send(new Resend(apiKey), "enquiry notification", {
+    to: CONTACT.email,
+    replyTo: enquiry.email,
+    subject: `New website enquiry — ${enquiry.name}`,
+    html: `
+      <div style="font-family: Georgia, serif; max-width: 560px; color: #2b2620;">
+        <h1 style="font-size: 20px;">New website enquiry</h1>
+        <table style="font-size: 14px; line-height: 1.8;">
+          <tr><td style="padding-right: 16px; color: #8a7e6d;">From</td><td>${enquiry.name}</td></tr>
+          <tr><td style="padding-right: 16px; color: #8a7e6d;">Email</td><td>${enquiry.email}</td></tr>
+          <tr><td style="padding-right: 16px; color: #8a7e6d;">Reference</td><td>${enquiry.id}</td></tr>
+        </table>
+        <pre style="font-family: inherit; font-size: 14px; line-height: 1.7; white-space: pre-wrap;">${enquiry.message}</pre>
+      </div>
+    `,
+  });
+
+  return { sent };
 }
