@@ -14,10 +14,24 @@ import { CONTACT } from "@/lib/config/contact";
  *
  * Nothing in the code can work around this; it is an account setting. Verify a
  * domain at resend.com/domains, then set RESEND_FROM_EMAIL to an address on it.
- * Until then, assume no booking or enquiry email reaches anyone.
+ * Until then, use RESEND_REDIRECT_TO below to review what would have been sent.
  */
 const FROM_ADDRESS =
   process.env.RESEND_FROM_EMAIL ?? "Xhabe Safari Lodge <onboarding@resend.dev>";
+
+/*
+ * Development catch-all.
+ *
+ * While no sending domain is verified, the only address Resend will accept is
+ * the account owner's — which makes the real templates impossible to review,
+ * because a guest confirmation is by definition addressed to somebody else.
+ * Setting RESEND_REDIRECT_TO to that allowed address delivers every message
+ * there instead, tagged with its intended recipient, so all of them can be read
+ * end to end.
+ *
+ * Leave unset in production: it silently reroutes guest mail.
+ */
+const REDIRECT_TO = process.env.RESEND_REDIRECT_TO?.trim() || null;
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr + "T00:00:00Z").toLocaleDateString("en-GB", {
@@ -45,15 +59,35 @@ interface Message {
  * request because its email bounced.
  */
 async function send(resend: Resend, label: string, message: Message): Promise<boolean> {
+  // Keep the intended recipient visible in the redirected copy, so a mailbox
+  // holding several of these can still tell the guest confirmation apart from
+  // the lodge notification.
+  const delivery = REDIRECT_TO
+    ? {
+        to: REDIRECT_TO,
+        subject: `[to: ${message.to}] ${message.subject}`,
+        html:
+          `<p style="font-family: system-ui, sans-serif; font-size: 12px; color: #8a7e6d; ` +
+          `border-left: 3px solid #d97706; padding: 8px 12px; margin: 0 0 20px;">` +
+          `Redirected by RESEND_REDIRECT_TO. In production this ${label} would go to ` +
+          `<strong>${message.to}</strong>.</p>` +
+          message.html,
+      }
+    : {};
+
+  if (REDIRECT_TO) {
+    console.warn(`Redirecting ${label} for ${message.to} to ${REDIRECT_TO}.`);
+  }
+
   try {
-    const { error } = await resend.emails.send({ from: FROM_ADDRESS, ...message });
+    const { error } = await resend.emails.send({ from: FROM_ADDRESS, ...message, ...delivery });
     if (error) {
-      console.error(`Resend rejected the ${label} to ${message.to}:`, error);
+      console.error(`Resend rejected the ${label} to ${REDIRECT_TO ?? message.to}:`, error);
       return false;
     }
     return true;
   } catch (err) {
-    console.error(`Failed to send the ${label} to ${message.to}:`, err);
+    console.error(`Failed to send the ${label} to ${REDIRECT_TO ?? message.to}:`, err);
     return false;
   }
 }
