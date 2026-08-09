@@ -1,6 +1,12 @@
 import { Resend } from "resend";
 import type { BookingRow } from "@/lib/data/types";
 import { CONTACT } from "@/lib/config/contact";
+import {
+  decisionPlainText,
+  decisionSubject,
+  type Decision,
+  type GuestMessageBooking,
+} from "@/lib/admin/guestMessage";
 
 /*
  * TODO: VERIFY A SENDING DOMAIN IN RESEND BEFORE LAUNCH.
@@ -176,6 +182,57 @@ export async function sendBookingConfirmationEmail(
   ]);
 
   return { guestSent, lodgeSent };
+}
+
+/**
+ * Tells a guest their booking was approved or declined.
+ *
+ * Sent when the lodge presses Confirm or Decline in the admin area. `note` is
+ * the optional line staff typed alongside the decision. Reply-to is the lodge,
+ * so a guest answering with special requests or questions reaches a person.
+ */
+export async function sendBookingDecisionEmail(
+  booking: GuestMessageBooking & { email: string },
+  decision: Decision,
+  note?: string
+): Promise<{ sent: boolean }> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.warn("RESEND_API_KEY not set — skipping booking decision email.");
+    return { sent: false };
+  }
+
+  const heading =
+    decision === "confirmed" ? "Your stay is confirmed" : "About your booking request";
+
+  // Built from the same text the WhatsApp link uses, so both channels say the
+  // same thing; only the presentation differs.
+  const paragraphs = decisionPlainText(decision, booking, note)
+    .split("\n\n")
+    .map(
+      (block) =>
+        `<p style="font-size: 14px; line-height: 1.7; margin: 0 0 16px;">${block
+          .split("\n")
+          .join("<br />")}</p>`
+    )
+    .join("");
+
+  const sent = await send(new Resend(apiKey), `guest ${decision} notice`, {
+    to: booking.email,
+    replyTo: CONTACT.email,
+    subject: decisionSubject(decision, booking),
+    html: `
+      <div style="font-family: Georgia, serif; max-width: 560px; margin: 0 auto; color: #2b2620;">
+        <h1 style="font-size: 22px; letter-spacing: 0.05em; margin: 0 0 20px;">${heading}</h1>
+        ${paragraphs}
+        <p style="font-size: 12px; color: #8a7e6d; margin-top: 32px;">
+          Xhabe Safari Lodge · ${CONTACT.addressOneLine}
+        </p>
+      </div>
+    `,
+  });
+
+  return { sent };
 }
 
 /**

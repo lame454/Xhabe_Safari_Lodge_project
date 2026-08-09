@@ -13,10 +13,17 @@ import {
   LogOut,
   ExternalLink,
   MessageSquare,
+  MessageCircle,
 } from "lucide-react";
 import type { AdminBooking } from "@/lib/data/adminBookings";
 import type { BookingStatus, EnquiryRow } from "@/lib/data/types";
 import { TOTAL_CHALETS } from "@/lib/data/capacity";
+import {
+  decisionPlainText,
+  guestWhatsappHref,
+  toWhatsappNumber,
+  type Decision,
+} from "@/lib/admin/guestMessage";
 
 interface OccupancyDay {
   date: string;
@@ -58,29 +65,49 @@ export default function AdminDashboard({ bookings, enquiries, occupancy, loadErr
   const [pending, startTransition] = useTransition();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [showCancelled, setShowCancelled] = useState(false);
+  /** Which booking is mid-decision, and which way it is going. */
+  const [composing, setComposing] = useState<{ id: string; decision: Decision } | null>(null);
 
-  async function setStatus(id: string, status: BookingStatus) {
+  async function setStatus(
+    id: string,
+    status: BookingStatus,
+    options: { note?: string; notifyGuest?: boolean } = {}
+  ): Promise<boolean> {
     setBusyId(id);
     setError(null);
+    setNotice(null);
 
     try {
       const res = await fetch(`/api/admin/bookings/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, ...options }),
       });
       const body = await res.json();
 
       if (!res.ok) {
         setError(body.error ?? "Could not update the booking.");
-        return;
+        return false;
       }
+
+      if (options.notifyGuest) {
+        setNotice(
+          body.guestNotified
+            ? "Guest emailed."
+            : "Booking updated, but the email could not be sent — check the Resend sending domain."
+        );
+      }
+
+      setComposing(null);
       // Re-run the server component so the list and occupancy strip both
       // reflect the change without a manual reload.
       startTransition(() => router.refresh());
+      return true;
     } catch {
       setError("Could not reach the server.");
+      return false;
     } finally {
       setBusyId(null);
     }
@@ -136,6 +163,12 @@ export default function AdminDashboard({ bookings, enquiries, occupancy, loadErr
         {(loadError || error) && (
           <p role="alert" className="border border-red-200 bg-red-50 text-red-700 font-body text-sm px-4 py-3">
             {loadError ?? error}
+          </p>
+        )}
+
+        {notice && (
+          <p role="status" className="border border-green-200 bg-green-50 text-green-800 font-body text-sm px-4 py-3">
+            {notice}
           </p>
         )}
 
@@ -214,6 +247,9 @@ export default function AdminDashboard({ bookings, enquiries, occupancy, loadErr
           busyId={busyId}
           pending={pending}
           onSetStatus={setStatus}
+          composing={composing}
+          onCompose={(id, decision) => setComposing({ id, decision })}
+          onCancelCompose={() => setComposing(null)}
           actions={["confirm", "decline"]}
         />
 
@@ -225,6 +261,9 @@ export default function AdminDashboard({ bookings, enquiries, occupancy, loadErr
           busyId={busyId}
           pending={pending}
           onSetStatus={setStatus}
+          composing={composing}
+          onCompose={(id, decision) => setComposing({ id, decision })}
+          onCancelCompose={() => setComposing(null)}
           actions={["decline"]}
         />
 
@@ -237,6 +276,9 @@ export default function AdminDashboard({ bookings, enquiries, occupancy, loadErr
             busyId={busyId}
             pending={pending}
             onSetStatus={setStatus}
+          composing={composing}
+          onCompose={(id, decision) => setComposing({ id, decision })}
+          onCancelCompose={() => setComposing(null)}
             actions={[]}
             muted
           />
@@ -260,6 +302,9 @@ export default function AdminDashboard({ bookings, enquiries, occupancy, loadErr
                 busyId={busyId}
                 pending={pending}
                 onSetStatus={setStatus}
+                composing={composing}
+                onCompose={(id, decision) => setComposing({ id, decision })}
+                onCancelCompose={() => setComposing(null)}
                 actions={["reinstate"]}
                 muted
               />
@@ -305,6 +350,164 @@ export default function AdminDashboard({ bookings, enquiries, occupancy, loadErr
 
 type Action = "confirm" | "decline" | "reinstate";
 
+type SetStatus = (
+  id: string,
+  status: BookingStatus,
+  options?: { note?: string; notifyGuest?: boolean }
+) => Promise<boolean>;
+
+/**
+ * The panel that opens under a booking when staff press Confirm or Decline.
+ *
+ * The decision and the message to the guest are taken together deliberately:
+ * silently flipping a status leaves the guest waiting on an answer that was
+ * already made. Staff can still choose to update without messaging when
+ * they've already spoken to the guest another way.
+ */
+function DecisionComposer({
+  booking,
+  decision,
+  busy,
+  onCancel,
+  onSetStatus,
+}: {
+  booking: AdminBooking;
+  decision: Decision;
+  busy: boolean;
+  onCancel: () => void;
+  onSetStatus: SetStatus;
+}) {
+  const [note, setNote] = useState("");
+  const [showPreview, setShowPreview] = useState(false);
+
+  const forMessage = {
+    first_name: booking.first_name,
+    last_name: booking.last_name,
+    check_in: booking.check_in,
+    check_out: booking.check_out,
+    guests: booking.guests,
+    phone: booking.phone,
+    package_name: booking.package_name,
+  };
+
+  const whatsappHref = guestWhatsappHref(decision, forMessage, note);
+  const whatsappNumber = toWhatsappNumber(booking.phone);
+  const confirming = decision === "confirmed";
+
+  /** Applies the decision, then hands off to WhatsApp with the message ready. */
+  async function decideAndOpenWhatsapp() {
+    if (!whatsappHref) return;
+    // Open synchronously — a popup blocked because it came after an await is a
+    // confusing failure, so the tab is claimed before the request goes out.
+    const tab = window.open("about:blank", "_blank", "noopener,noreferrer");
+    const ok = await onSetStatus(booking.id, decision, { note });
+    if (ok && tab) tab.location.href = whatsappHref;
+    else tab?.close();
+  }
+
+  return (
+    <div className="mt-5 pt-5 border-t border-base-dark/10">
+      <p className="font-body text-sm text-base-dark/80 mb-3">
+        {confirming ? (
+          <>
+            Confirming <strong>{booking.first_name}</strong>&apos;s stay. Their chalets are
+            already held, so the calendar won&apos;t change.
+          </>
+        ) : (
+          <>
+            Declining <strong>{booking.first_name}</strong>&apos;s request. This releases{" "}
+            {booking.chalets} {booking.chalets === 1 ? "chalet" : "chalets"} back to the
+            calendar.
+          </>
+        )}
+      </p>
+
+      <label
+        htmlFor={`note-${booking.id}`}
+        className="font-body text-xs uppercase tracking-wider text-base-dark/50 font-semibold block mb-2"
+      >
+        Add a line to the guest (optional)
+      </label>
+      <textarea
+        id={`note-${booking.id}`}
+        rows={3}
+        value={note}
+        onChange={(event) => setNote(event.target.value)}
+        placeholder={
+          confirming
+            ? "e.g. We've noted your late arrival and kept dinner aside."
+            : "e.g. We're fully booked that week, but the following weekend is open."
+        }
+        className="w-full font-body text-sm border border-base-dark/20 bg-white px-3 py-2 mb-3 focus:outline-none focus:border-accent-amber resize-none"
+      />
+
+      <button
+        type="button"
+        onClick={() => setShowPreview((v) => !v)}
+        className="font-body text-[11px] uppercase tracking-wider text-accent-amber hover:text-base-dark transition-colors mb-3"
+      >
+        {showPreview ? "Hide" : "Preview"} what the guest gets
+      </button>
+
+      {showPreview && (
+        <pre className="font-body text-xs text-base-dark/70 whitespace-pre-wrap bg-base-light border border-base-dark/10 p-4 mb-4 leading-relaxed">
+          {decisionPlainText(decision, forMessage, note)}
+        </pre>
+      )}
+
+      <div className="flex flex-wrap gap-2">
+        <ActionButton
+          busy={busy}
+          onClick={() => onSetStatus(booking.id, decision, { note, notifyGuest: true })}
+          icon={<Mail className="w-4 h-4" />}
+          label={confirming ? "Confirm & email" : "Decline & email"}
+          tone={confirming ? "primary" : "danger"}
+        />
+
+        {whatsappHref ? (
+          <ActionButton
+            busy={busy}
+            onClick={decideAndOpenWhatsapp}
+            icon={<MessageCircle className="w-4 h-4" />}
+            label="Open WhatsApp"
+            tone="whatsapp"
+          />
+        ) : (
+          <span className="font-body text-[11px] text-base-dark/40 self-center max-w-[16rem] leading-snug">
+            {booking.phone
+              ? `Can't build a WhatsApp link from "${booking.phone}".`
+              : "No phone number given, so WhatsApp isn't available."}
+          </span>
+        )}
+
+        <ActionButton
+          busy={busy}
+          onClick={() => onSetStatus(booking.id, decision, { note })}
+          icon={<Check className="w-4 h-4" />}
+          label="Update only"
+          tone="ghost"
+        />
+
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={busy}
+          className="font-body text-xs uppercase tracking-wider text-base-dark/50 hover:text-base-dark px-3 disabled:opacity-50"
+        >
+          Back
+        </button>
+      </div>
+
+      {whatsappNumber && (
+        <p className="font-body text-[11px] text-base-dark/40 mt-3">
+          WhatsApp will open a chat with +{whatsappNumber} — check that looks right before
+          sending. You still press send yourself.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function BookingSection({
   title,
   empty,
@@ -314,15 +517,21 @@ function BookingSection({
   onSetStatus,
   actions,
   muted = false,
+  composing,
+  onCompose,
+  onCancelCompose,
 }: {
   title: string;
   empty: string;
   bookings: AdminBooking[];
   busyId: string | null;
   pending: boolean;
-  onSetStatus: (id: string, status: BookingStatus) => void;
+  onSetStatus: SetStatus;
   actions: Action[];
   muted?: boolean;
+  composing: { id: string; decision: Decision } | null;
+  onCompose: (id: string, decision: Decision) => void;
+  onCancelCompose: () => void;
 }) {
   return (
     <section>
@@ -335,6 +544,7 @@ function BookingSection({
         <ul className="space-y-3">
           {bookings.map((booking) => {
             const busy = busyId === booking.id || pending;
+            const isComposing = composing?.id === booking.id;
             return (
               <li
                 key={booking.id}
@@ -398,12 +608,12 @@ function BookingSection({
                     </p>
                   </div>
 
-                  {actions.length > 0 && (
+                  {actions.length > 0 && !isComposing && (
                     <div className="flex flex-wrap gap-2">
                       {actions.includes("confirm") && (
                         <ActionButton
                           busy={busy}
-                          onClick={() => onSetStatus(booking.id, "confirmed")}
+                          onClick={() => onCompose(booking.id, "confirmed")}
                           icon={<Check className="w-4 h-4" />}
                           label="Confirm"
                           tone="primary"
@@ -412,13 +622,14 @@ function BookingSection({
                       {actions.includes("decline") && (
                         <ActionButton
                           busy={busy}
-                          onClick={() => onSetStatus(booking.id, "cancelled")}
+                          onClick={() => onCompose(booking.id, "cancelled")}
                           icon={<X className="w-4 h-4" />}
                           label={booking.status === "confirmed" ? "Cancel" : "Decline"}
                           tone="danger"
                         />
                       )}
                       {actions.includes("reinstate") && (
+                        // Internal bookkeeping — the guest is not told about it.
                         <ActionButton
                           busy={busy}
                           onClick={() => onSetStatus(booking.id, "pending")}
@@ -430,6 +641,16 @@ function BookingSection({
                     </div>
                   )}
                 </div>
+
+                {isComposing && composing && (
+                  <DecisionComposer
+                    booking={booking}
+                    decision={composing.decision}
+                    busy={busy}
+                    onCancel={onCancelCompose}
+                    onSetStatus={onSetStatus}
+                  />
+                )}
               </li>
             );
           })}
@@ -465,7 +686,7 @@ function ActionButton({
   onClick: () => void;
   icon: React.ReactNode;
   label: string;
-  tone: "primary" | "danger" | "ghost";
+  tone: "primary" | "danger" | "ghost" | "whatsapp";
 }) {
   const tones = {
     primary: "bg-accent-amber text-white hover:bg-base-dark active:bg-base-dark",
@@ -473,6 +694,7 @@ function ActionButton({
       "border border-red-200 text-red-700 hover:bg-red-600 hover:text-white hover:border-red-600 active:bg-red-600 active:text-white",
     ghost:
       "border border-base-dark/20 text-base-dark/70 hover:bg-base-dark hover:text-white active:bg-base-dark active:text-white",
+    whatsapp: "bg-[#25D366] text-white hover:bg-[#128C4A] active:bg-[#128C4A]",
   };
   return (
     <button

@@ -2,9 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { isAuthenticated } from "@/lib/admin/auth";
 import { createAdminClient } from "@/lib/supabase/server";
+import { sendBookingDecisionEmail } from "@/lib/email";
 
 const patchSchema = z.object({
   status: z.enum(["pending", "confirmed", "cancelled"]),
+  /** Optional line from staff, included in the guest's message. */
+  note: z.string().trim().max(1000).optional(),
+  /** Whether to email the guest about this decision. */
+  notifyGuest: z.boolean().optional(),
 });
 
 /**
@@ -68,5 +73,29 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     return NextResponse.json({ error: "Booking not found." }, { status: 404 });
   }
 
-  return NextResponse.json({ booking: data });
+  // Email the guest, if asked to and if this is a decision worth telling them
+  // about — moving something back to pending is internal bookkeeping.
+  let guestNotified: boolean | null = null;
+  if (parsed.data.notifyGuest && parsed.data.status !== "pending") {
+    // Look up the package name so the message can state what they booked.
+    let packageName: string | null = null;
+    if (data.package_id) {
+      const { data: pkg } = await supabase
+        .from("packages")
+        .select("name")
+        .eq("id", data.package_id)
+        .maybeSingle();
+      packageName = pkg?.name ?? null;
+    }
+
+    // The status change is already committed; a mail failure must not undo it.
+    const { sent } = await sendBookingDecisionEmail(
+      { ...data, package_name: packageName },
+      parsed.data.status,
+      parsed.data.note
+    );
+    guestNotified = sent;
+  }
+
+  return NextResponse.json({ booking: data, guestNotified });
 }
