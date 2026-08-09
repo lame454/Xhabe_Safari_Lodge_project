@@ -75,6 +75,8 @@ export interface StaffRow {
   created_at: string;
 }
 
+export type BookingStatus = "pending" | "confirmed" | "cancelled";
+
 export interface BookingRow {
   id: string;
   check_in: string;
@@ -86,6 +88,15 @@ export interface BookingRow {
   email: string;
   phone: string | null;
   details: string | null;
-  status: "pending" | "confirmed" | "cancelled";
+  status: BookingStatus;
+  created_at: string;
+}
+
+export interface EnquiryRow {
+  id: string;
+  name: string;
+  email: string;
+  message: string;
+  handled: boolean;
   created_at: string;
 }
