@@ -1,106 +1,108 @@
-import {
-  Sunrise,
-  Ship,
-  Landmark,
-  Utensils,
-  Flame,
-  Telescope,
-  Fish,
-  Globe,
-} from "lucide-react";
+import { Sunrise, Ship, Landmark, Fish, Sunset, Users, Hand } from "lucide-react";
 
 /**
- * A lodge activity.
+ * The lodge's activity programme, taken from the 2028 rates deck.
  *
- * `slug` is the stable identifier shared across the whole site: it is the
- * anchor on the Activities page, the `?activity=` value the Gallery filters
- * on, and the tag stored in `gallery_images.activity_tags`. Adding a photo to
- * an activity is therefore just a matter of tagging the row with the slug —
- * no code change needed.
+ * `slug` is the stable identifier shared across the site: the anchor on the
+ * Activities page, the `?activity=` value the Gallery filters on, and the tag
+ * stored in `gallery_images.activity_tags`. Tagging a photo with a slug is all
+ * it takes to make it appear here — no code change.
+ *
+ * `image` is a real photograph from the lodge whose alt text describes what is
+ * actually in the frame. Several activities have no photograph of their own
+ * yet, so they borrow a truthful nearby image rather than claim a picture that
+ * doesn't exist; `needsPhoto` marks those for the next shoot.
  */
 export interface Activity {
   slug: string;
   name: string;
   icon: React.ComponentType<{ className?: string }>;
   description: string;
-  /** Short label describing which packages include this activity. */
+  /** Whether the nightly rate covers it. */
   included: string;
-  /** Fallback image, used until the Gallery has photos tagged for this slug. */
   image: string;
+  imageAlt: string;
+  /** True where no photograph of this activity exists yet. */
+  needsPhoto?: boolean;
 }
 
 export const ACTIVITIES: Activity[] = [
   {
-    slug: "morning-game-drive",
+    slug: "game-drives",
     icon: Sunrise,
-    name: "Morning Game Drive",
+    name: "Game Drives",
     description:
-      "Dawn game drives through open Chobe bush in our 4x4 open-sided vehicles. Spot elephant, buffalo, lion, leopard, and wild dog as the savanna awakens. Our expert guides read the land and tracks to find magic most visitors never encounter.",
-    included: "Included in all packages",
-    image: "/images/activities-game-drive.jpg",
+      "Morning, afternoon and night drives with a professional guide in an open 4x4. The lodge sits on a corridor between the Chobe Forest and the river, five kilometres from the national park, so the game comes to the doorstep. Every itinerary is shaped around what you want to see.",
+    included: "Included in the rate",
+    image: "/images/giraffe-tower.jpg",
+    imageAlt: "Four giraffes standing together in open Chobe bush under a clear sky",
   },
   {
-    slug: "river-boat-cruise",
+    slug: "sundowner",
+    icon: Sunset,
+    name: "Sundowners",
+    description:
+      "The plateau position earns its keep at the end of the day. Drinks are set up as the sun drops over the floodplain towards Namibia, with the whole valley turning colour in front of you.",
+    included: "Included in the rate",
+    image: "/images/sunset-pool-chalets.jpg",
+    imageAlt:
+      "Sunset over the pool at Xhabe Safari Lodge, tented chalets silhouetted against a pink sky and reflected in the water",
+  },
+  {
+    slug: "boat-cruise",
     icon: Ship,
-    name: "River Boat Cruise",
+    name: "Boat Cruise",
     description:
-      "Float through the Chobe River channels at close range with hippos, crocodiles, elephants bathing at the bank, and hundreds of waterbirds. The golden hour on the water is unforgettable — sundowners served aboard.",
-    included: "Included in Packages 2 & 3",
-    image: "/images/activities-boat.jpg",
+      "A cruise on the Chobe from Kasane, where the river's edge delivers game viewing you cannot get from a vehicle — elephant coming down to drink, hippo pods, and a great deal of the park's 450-plus bird species.",
+    included: "Optional, at extra cost",
+    image: "/images/floodplain-from-pool.jpg",
+    imageAlt: "The Chobe River floodplain stretching to the horizon, seen from the lodge plateau",
+    needsPhoto: true,
   },
   {
-    slug: "victoria-falls-day-trip",
+    slug: "fishing-canoe",
+    icon: Fish,
+    name: "Fishing & Canoe",
+    description:
+      "Out onto the Chobe in a mokoro, poled by a guide who knows the channels. A quiet counterpoint to the drives — and the fishing is good.",
+    included: "Available on request",
+    image: "/images/mokoro-chobe-river.jpg",
+    imageAlt:
+      "Two guides poling guests in a mokoro canoe through the shallows of the Chobe River at golden hour",
+  },
+  {
+    slug: "victoria-falls",
     icon: Landmark,
     name: "Victoria Falls Day Trip",
     description:
-      "A full-day excursion to one of the Seven Natural Wonders of the World. Cross into Zimbabwe and stand at the edge of the largest waterfall curtain on Earth — 1,708 metres wide and 108 metres tall. Approximately 2 hours each way.",
-    included: "Included in Packages 2 & 3",
-    image: "/images/activities-vic-falls.jpg",
+      "A full day across the border into Zimbabwe to stand at one of the Seven Natural Wonders of the World, then back to the lodge for dinner.",
+    included: "Optional, at extra cost",
+    image: "/images/chalets-plateau-floodplain.jpg",
+    imageAlt:
+      "Tented chalets on the Xhabe plateau with the Chobe floodplain and river beyond",
+    needsPhoto: true,
   },
   {
-    slug: "boma-dinner",
-    icon: Flame,
-    name: "Boma Dinner & Cultural Night",
+    slug: "village-tour",
+    icon: Users,
+    name: "Village Tour",
     description:
-      "Gather under the stars around a traditional fire in the boma. Enjoy a feast of local meats, vegetables, and staples while the lodge team shares stories of the bush, local culture, and traditional dance.",
-    included: "Included in Package 3",
-    image: "/images/activities-boma.jpg",
+      "A walk through a neighbouring village to meet the community the lodge is part of — every one of its ten staff comes from the Chobe Enclave.",
+    included: "Included in the rate",
+    image: "/images/lodge-pathway-dusk.jpg",
+    imageAlt: "A lamp-lit gravel pathway through the lodge grounds at dusk",
+    needsPhoto: true,
   },
   {
-    slug: "stargazing",
-    icon: Telescope,
-    name: "Stargazing",
+    slug: "basketry",
+    icon: Hand,
+    name: "Basketry Weaving",
     description:
-      "With no light pollution for kilometres around, the Chobe night sky is extraordinary. Our guides turn off the lodge lights for a scheduled stargazing session — the Milky Way stretches from horizon to horizon.",
-    included: "Included in Package 3",
-    image: "/images/activities-stars.jpg",
-  },
-  {
-    slug: "floodplain-fishing",
-    icon: Fish,
-    name: "Floodplain Fishing",
-    description:
-      "Cast a line in the Chobe River and its lagoons for tigerfish, bream, and catfish. A peaceful, meditative counterpoint to the adrenalin of the game drive — available as an add-on activity for all guests.",
-    included: "Available on request",
-    image: "/images/activities-fishing.jpg",
-  },
-  {
-    slug: "village-visit",
-    icon: Globe,
-    name: "Cultural Village Visit",
-    description:
-      "Walk with your guide through a neighbouring village to meet local Basubiya families, understand daily bush life, and support the community economy that underpins Xhabe's conservation ethic.",
-    included: "Available on request",
-    image: "/images/activities-village.jpg",
-  },
-  {
-    slug: "sundowners",
-    icon: Utensils,
-    name: "Sundowner Cocktails",
-    description:
-      "Every evening, as the sun sinks towards Namibia, the team sets up a mobile sundowner station on the plateau with panoramic floodplain views. Local gins, craft beers, soft drinks, and light snacks served.",
-    included: "Included in all packages",
-    image: "/images/activities-sundowner.jpg",
+      "Sit down with the local women who weave the baskets used throughout the lodge, and learn the craft yourself. Their work is for sale on site.",
+    included: "Included in the rate",
+    image: "/images/curios-detail.jpg",
+    imageAlt:
+      "Woven baskets, carved wooden pieces and pottery arranged on a cowhide rug in the lodge lounge",
   },
 ];
 

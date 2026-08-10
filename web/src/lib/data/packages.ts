@@ -5,80 +5,52 @@ import type { PackageRow, RateSeasonRow } from "./types";
 // still empty (e.g. before the lodge has entered its real package data).
 // Keeping the copy here (rather than only in the page) means the site
 // always renders something reasonable even pre-launch.
+/*
+ * What a guest can book.
+ *
+ * This replaces the demo's invented "Package One/Two/Three" night-bundles,
+ * which did not match how the lodge actually sells: a nightly rate per room,
+ * varying by season, nationality and rack-vs-trade. The real numbers live in
+ * lib/data/rates.ts; these rows exist so the booking form can ask which of the
+ * two accommodation types a guest wants.
+ *
+ * `nights` is 1 because both are priced per night, not as fixed-length stays.
+ */
 export const FALLBACK_PACKAGES: PackageRow[] = [
   {
-    id: "pkg-1",
-    name: "Package One",
-    slug: "package-one",
+    id: "offer-chalet",
+    name: "Luxury Tented Chalet",
+    slug: "chalet",
     nights: 1,
     min_pax: null,
     description:
-      "An ideal introduction to the Chobe wilderness — one night under the stars, one golden sunset on the plateau, and a morning in the wild.",
+      "One of nine tented chalets on the plateau, with a super king bed, two private balconies over the floodplain, air conditioning and an en-suite bathroom.",
     inclusions: [
-      "Accommodation in luxury tented chalet",
-      "All meals (dinner, breakfast)",
-      "Local beverages throughout",
-      "Sunset game drive + sundowner",
-      "Guided morning walk or bush experience",
+      "Accommodation and bed levy",
+      "All meals",
+      "Soft drinks, bottled water, local beer and spirits",
+      "Game drive and sundowner",
+      "Village tour and basketry weaving",
     ],
-    activity_slugs: ["morning-game-drive", "sundowners"],
+    activity_slugs: ["game-drives", "sundowner", "village-tour", "basketry"],
     sort_order: 1,
     created_at: "",
   },
   {
-    id: "pkg-2",
-    name: "Package Two",
-    slug: "package-two",
-    nights: 2,
-    min_pax: 4,
+    id: "offer-camping",
+    name: "Camping",
+    slug: "camping",
+    nights: 1,
+    min_pax: null,
     description:
-      "The most popular choice. Two immersive nights with the full river-and-bush experience, plus a full day at Victoria Falls — one of the Seven Wonders.",
+      "Bring your own tent and pitch on the lodge grounds, with access to the pool, the bar and the lodge's facilities. Priced per person, all year round.",
     inclusions: [
-      "2 nights accommodation in luxury tented chalet",
-      "All meals (dinner × 2, breakfasts × 2, lunches × 2)",
-      "Local beverages throughout",
-      "Sunset & morning game drives",
-      "Chobe River boat cruise",
-      "Victoria Falls day trip (Zimbabwe)",
-      "Sundowner cocktails each evening",
+      "Camping pitch on the lodge grounds",
+      "Access to lodge facilities",
+      "Priced per person per night",
     ],
-    activity_slugs: [
-      "morning-game-drive",
-      "river-boat-cruise",
-      "victoria-falls-day-trip",
-      "sundowners",
-    ],
+    activity_slugs: [],
     sort_order: 2,
-    created_at: "",
-  },
-  {
-    id: "pkg-3",
-    name: "Package Three",
-    slug: "package-three",
-    nights: 3,
-    min_pax: 4,
-    description:
-      "The complete Xhabe experience. Three nights, every activity, the full spectrum of Chobe — from pre-dawn game drives to star-drenched boma dinners. Nothing held back.",
-    inclusions: [
-      "3 nights accommodation in luxury tented chalet",
-      "All meals throughout",
-      "Local beverages throughout",
-      "Sunset & morning game drives each day",
-      "Chobe River boat cruise",
-      "Victoria Falls day trip (Zimbabwe)",
-      "Traditional boma dinner with cultural dance",
-      "Guided stargazing session",
-      "Sundowner cocktails each evening",
-    ],
-    activity_slugs: [
-      "morning-game-drive",
-      "river-boat-cruise",
-      "victoria-falls-day-trip",
-      "boma-dinner",
-      "stargazing",
-      "sundowners",
-    ],
-    sort_order: 3,
     created_at: "",
   },
 ];

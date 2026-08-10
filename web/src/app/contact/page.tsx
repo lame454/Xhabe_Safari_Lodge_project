@@ -55,8 +55,8 @@ export default function ContactPage() {
       <section className="relative h-[45vh] min-h-[320px] flex items-end overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image
-            src="/images/about-lodge.jpg"
-            alt="Aerial view of Xhabe Safari Lodge above Chobe floodplains"
+            src="/images/lodge-exterior-day.jpg"
+            alt="The main building and pool at Xhabe Safari Lodge seen across the lawn"
             fill
             sizes="100vw"
             priority

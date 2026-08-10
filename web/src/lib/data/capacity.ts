@@ -9,8 +9,14 @@
  * `rooms_needed()` — see web/supabase/SCHEMA.md. Change both together.
  */
 
-/** Xhabe has 8 luxury tented chalets. */
-export const TOTAL_CHALETS = 8;
+/**
+ * Xhabe has 9 luxury tented chalets sleeping 18 guests.
+ *
+ * The lodge's 2028 rates deck states "chalets x 9" and "a total of 18 guests",
+ * which agree at two adults per chalet. A stray "8 rooms" line in the same
+ * section contradicts both and is treated as stale text.
+ */
+export const TOTAL_CHALETS = 9;
 
 /** Maximum 2 adults per chalet. */
 export const MAX_ADULTS_PER_CHALET = 2;

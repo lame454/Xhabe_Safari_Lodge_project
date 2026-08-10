@@ -1,270 +1,288 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { Sun, Binoculars, Waves, Eye, Users, Star, ArrowRight } from "lucide-react";
+import { ArrowRight, MapPin } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
-import Button from "@/components/Button";
 import StickyBookCta from "@/components/StickyBookCta";
-import {
-  AlternatingSection,
-  AmenityGridSection,
-  QuoteBandSection,
-  LogisticsPanelSection,
-} from "@/components/HomeSections";
-import { getPackages, packageSlug } from "@/lib/data/packages";
-import { getFeaturedTestimonials } from "@/lib/data/testimonials";
+import { GlassPanel, PhotoCard, StatPlate } from "@/components/Glass";
+import { LODGE } from "@/lib/data/lodge";
+import { ACTIVITIES } from "@/lib/data/activities";
+import { CURRENCY, lowestNightlyRate } from "@/lib/data/rates";
 
 export const metadata: Metadata = {
-  title: "Xhabe Safari Lodge | Luxury Tented Lodge — Chobe, Botswana",
+  title: "Xhabe Safari Lodge | Exclusive Wilderness — Chobe, Botswana",
   description:
-    "Perched on a plateau overlooking the Chobe River floodplains and Namibia, Xhabe Safari Lodge offers an intimate 8-room luxury safari experience in Botswana. Game drives, boat cruises, Victoria Falls day trips.",
+    "Nine luxury tented chalets on a plateau above the Chobe River floodplain, five kilometres from Chobe National Park. Game drives, river cruises, boma dinners and the largest pool in the area.",
 };
 
-export default async function HomePage() {
-  const [{ packages }, { testimonials }] = await Promise.all([
-    getPackages(),
-    getFeaturedTestimonials(1),
-  ]);
-  const featuredQuote = testimonials[0];
-  // Every highlight routes somewhere: the icon and card are the link, so this
-  // block doubles as the homepage's primary wayfinding into the site.
-  const highlightAmenities = [
-    {
-      icon: Sun,
-      title: "Million-Dollar Sunsets",
-      description:
-        "Watch the Chobe floodplains transform into liquid gold each evening from your private viewing deck overlooking the Namibia border.",
-      href: "/activities#sundowners",
-      linkLabel: "Sundowners",
-    },
-    {
-      icon: Binoculars,
-      title: "Big Five Country",
-      description:
-        "5 km from Chobe National Park's eastern boundary inside the KAZA Conservation Area — one of Africa's largest and wildest transfrontier reserves.",
-      href: "/activities#morning-game-drive",
-      linkLabel: "Game drives",
-    },
-    {
-      icon: Waves,
-      title: "River & Wilderness",
-      description:
-        "The Chobe River's channels and lagoons draw elephant herds, hippo pods, and hundreds of bird species to your doorstep year-round.",
-      href: "/activities#river-boat-cruise",
-      linkLabel: "River cruises",
-    },
-    {
-      icon: Eye,
-      title: "Intimate & Authentic",
-      description:
-        "Only 8 luxury tented rooms ensure a genuinely personal experience — not a resort, not a chain — led by a passionate local team.",
-      href: "/accommodation",
-      linkLabel: "The chalets",
-    },
-    {
-      icon: Users,
-      title: "Expert Local Guides",
-      description:
-        "Our guides — Maatla, Beauty, Lindi, and the team — bring decades of knowledge of the Chobe ecosystem and its wildlife behaviours.",
-      href: "/about",
-      linkLabel: "Meet the team",
-    },
-    {
-      icon: Star,
-      title: "All-Inclusive Packages",
-      description:
-        "Three carefully curated stay packages from 1 to 3 nights, each fully inclusive of meals, activities, and local beverages.",
-      href: "/packages",
-      linkLabel: "Compare packages",
-    },
-  ];
+export default function HomePage() {
+  const featured = ACTIVITIES.slice(0, 3);
 
   return (
     <>
-      <NavBar />
+      <NavBar overHero />
 
-      {/* ============ SECTION 1: FULL-BLEED HERO ============ */}
-      <section
-        aria-label="Welcome to Xhabe Safari Lodge"
-        className="relative h-screen min-h-[600px] max-h-[900px] flex items-end overflow-hidden"
-      >
-        {/* Hero Image */}
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/images/hero-chobe.jpg"
-            alt="Sunset over the Chobe River floodplains viewed from Xhabe Safari Lodge, Botswana"
-            fill
-            sizes="100vw"
-            priority
-            className="object-cover"
-          />
-          <div className="hero-overlay absolute inset-0" />
-        </div>
+      {/* ============ HERO ============ */}
+      <section className="relative min-h-[100svh] flex items-end overflow-hidden">
+        <Image
+          src="/images/sunset-pool-chalets.jpg"
+          alt="Sunset over the pool at Xhabe Safari Lodge, tented chalets silhouetted against a pink sky and mirrored in the water"
+          fill
+          sizes="100vw"
+          priority
+          className="object-cover"
+        />
+        <span aria-hidden="true" className="absolute inset-0 scrim-full" />
 
-        {/* Hero Content — bottom-anchored */}
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 md:pb-24">
-          <span className="text-[10px] uppercase tracking-[0.3em] text-base-cream/80 font-semibold font-body mb-4 block">
-            Chobe District · Botswana
-          </span>
-          <h1 className="font-display text-5xl md:text-7xl lg:text-8xl text-white mb-6 leading-none tracking-wide max-w-3xl">
-            Wilderness,<br />
-            <span className="text-base-cream">Unfiltered.</span>
-          </h1>
-          <p className="font-body text-base md:text-lg text-white/80 max-w-xl mb-10 leading-relaxed">
-            A plateau perch overlooking the Chobe floodplains and Namibia — Xhabe Safari Lodge
-            is an intimate 8-room tented retreat where the wild comes to you.
-          </p>
-          <div className="flex flex-wrap gap-4 items-center">
-            <Button href="/book" variant="primary" showArrow>
-              Check Availability
-            </Button>
-            <Button href="/accommodation" variant="secondary" className="!border-white/50 !text-white hover:!bg-white hover:!text-base-dark">
-              View Rooms
-            </Button>
+        <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-14 sm:pb-20">
+          <div className="max-w-2xl animate-rise">
+            <span className="inline-flex items-center gap-2 font-body text-[10px] uppercase tracking-[0.3em] text-white/70 mb-5">
+              <MapPin className="w-3.5 h-3.5 text-accent-soft" />
+              {LODGE.location.region}
+            </span>
+
+            <h1 className="font-display text-[3.25rem] leading-[0.95] sm:text-7xl lg:text-8xl text-white mb-6">
+              Exclusive
+              <br />
+              <span className="text-accent-soft">wilderness.</span>
+            </h1>
+
+            <p className="font-body text-base sm:text-lg text-white/85 leading-relaxed max-w-xl mb-9">
+              {LODGE.chalets} tented chalets on a plateau above the Chobe River floodplain — an
+              intimate camp for {LODGE.guests} guests, five kilometres from the national park.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                href="/book"
+                className="group inline-flex items-center gap-2 rounded-full bg-accent-amber text-white font-body text-xs font-semibold uppercase tracking-[0.14em] px-8 py-4 shadow-xl shadow-black/25 hover:brightness-95 active:scale-[0.98] transition-all duration-300 ease-spring"
+              >
+                Check availability
+                <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+              </Link>
+              <Link
+                href="/gallery"
+                className="inline-flex items-center rounded-full glass-dark text-white font-body text-xs font-semibold uppercase tracking-[0.14em] px-8 py-4 hover:bg-white/15 active:scale-[0.98] transition-all duration-300 ease-spring"
+              >
+                See the lodge
+              </Link>
+            </div>
           </div>
-        </div>
-
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-1 opacity-60">
-          <div className="w-px h-8 bg-white animate-pulse" />
-          <span className="text-[9px] uppercase tracking-[0.2em] text-white font-body">Scroll</span>
         </div>
       </section>
 
-      {/* ============ SECTION 2: AMENITY GRID (Layout 2) ============ */}
-      <AmenityGridSection
-        subtitle="Why Xhabe"
-        title="Where the Chobe Comes Alive"
-        amenities={highlightAmenities}
-      />
+      {/* ============ CONTEXT — why here ============ */}
+      <section className="relative py-20 sm:py-28 bg-base-light">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl mb-12">
+            <span className="font-body text-[10px] uppercase tracking-[0.28em] text-accent-ink font-semibold">
+              Why Chobe
+            </span>
+            <h2 className="font-display text-3xl sm:text-5xl text-base-dark mt-4 leading-[1.05]">
+              The best elephant country on earth.
+            </h2>
+          </div>
 
-      {/* ============ SECTION 3: ALTERNATING IMAGE/TEXT — Accommodation (Layout 1) ============ */}
-      <AlternatingSection
-        subtitle="Accommodation"
-        title="Luxury Tented Rooms with River Views"
-        description="Eight secluded tented chalets, each with two private viewing decks — one facing the Chobe floodplain and Namibia, the other overlooking the lodge gardens. Super king beds, en-suite bathrooms, wooden floors, eco-friendly amenities, mosquito nets, personal safes, and Wi-Fi. Maximum 2 adults per chalet ensures your privacy is absolute."
-        imagePath="/images/room-deck-view.jpg"
-        imageAlt="Luxury tented chalet interior at Xhabe Safari Lodge overlooking the Chobe River"
-        imageLeft={true}
-        ctaText="Explore Accommodation"
-        ctaHref="/accommodation"
-      />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            {LODGE.context.map((item) => (
+              <StatPlate key={item.label} {...item} />
+            ))}
+          </div>
+        </div>
+      </section>
 
-      {/* ============ SECTION 4: QUOTE BAND (Layout 3) ============ */}
-      <QuoteBandSection
-        quote={featuredQuote.quote}
-        author={featuredQuote.guest_name}
-        source={featuredQuote.source}
-      />
+      {/* ============ THE LODGE — big photo + glass ============ */}
+      <section className="relative">
+        <div className="relative min-h-[85svh] flex items-center overflow-hidden">
+          <Image
+            src="/images/chalets-plateau-floodplain.jpg"
+            alt="Tented chalets on the Xhabe plateau with the Chobe floodplain and river stretching out beyond"
+            fill
+            sizes="100vw"
+            className="object-cover"
+          />
+          <span aria-hidden="true" className="absolute inset-0 bg-black/25" />
 
-      {/* ============ SECTION 5: ALTERNATING — Activities (Layout 1, reversed) ============ */}
-      <AlternatingSection
-        subtitle="Experiences"
-        title="Every Day a Different Adventure"
-        description="Morning game drives through open Chobe bush, river cruises past bathing elephant herds, a full-day trip to Victoria Falls, handcrafted canoe excursions, sunset sundowners, village cultural visits, and serene floodplain fishing. No two days at Xhabe are alike."
-        imagePath="/images/activities-game-drive.jpg"
-        imageAlt="Open 4x4 safari vehicle on a morning game drive near Chobe National Park"
-        imageLeft={false}
-        ctaText="See All Activities"
-        ctaHref="/activities"
-      />
-
-      {/* ============ SECTION 6: MAP + LOGISTICS PANEL (Layout 4) ============ */}
-      <LogisticsPanelSection
-        subtitle="Getting Here"
-        title="Find Us on the Edge of Chobe"
-        logistics={[
-          {
-            title: "By Air",
-            details: [
-              "Kasane International Airport — 70 km (approx. 1 hr drive)",
-              "Charter flights land at Ngoma Airstrip, 5 km from lodge",
-            ],
-          },
-          {
-            title: "By Road",
-            details: [
-              "5 km from Ngoma Border Gate (Botswana/Namibia crossing)",
-              "Turn at Mabele village, follow the Ngoma road to lodge sign",
-              "From Kasane: 70 km via tar + gravel road (~1 hr)",
-              "From Victoria Falls, Zimbabwe: 120 km (~2 hrs)",
-              "From Livingstone, Zambia: 120 km via Kazungula Ferry (~2.5 hrs)",
-            ],
-          },
-          {
-            title: "Location Notes",
-            details: [
-              "Coordinates available on request — GPS signal variable in forest",
-              "Electricity, water, and mobile network available at lodge",
-              "Within the KAZA Transfrontier Conservation Area",
-            ],
-          },
-        ]}
-      />
-
-      {/* ============ SECTION 7: PACKAGES TEASER ============ */}
-      <section className="py-24 bg-base-dark text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <span className="text-[10px] uppercase tracking-[0.25em] text-accent-amber font-semibold font-body mb-3 block">
-            Stay Packages
-          </span>
-          <h2 className="font-display text-3xl md:text-4xl text-base-cream mb-5">
-            Choose Your Chobe Adventure
-          </h2>
-          <p className="font-body text-sm text-white/70 max-w-2xl mx-auto mb-12">
-            From a single-night immersion to a 3-night deep dive with Victoria Falls and traditional boma dinner — each package is all-inclusive of meals, activities, and local beverages.
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            {packages.map((pkg, i) => (
-              // Whole card is the link — easier to tap than an inner
-              // "Learn more", and the hover lift signals it's pressable.
+          <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+            <GlassPanel tone="dark" className="max-w-xl p-8 sm:p-10">
+              <span className="font-body text-[10px] uppercase tracking-[0.28em] text-accent-soft font-semibold">
+                The Lodge
+              </span>
+              <h2 className="font-display text-3xl sm:text-4xl text-white mt-4 mb-5 leading-tight">
+                Nine chalets, and not one more.
+              </h2>
+              <p className="font-body text-sm sm:text-base text-white/80 leading-relaxed mb-6">
+                {LODGE.location.corridor} Each chalet is spaced for privacy and opens onto two
+                balconies over the floodplain — a super king bed, a dressing area, air
+                conditioning, and an en-suite bathroom behind canvas walls.
+              </p>
+              <ul className="grid sm:grid-cols-2 gap-x-6 gap-y-2 mb-8">
+                {LODGE.chalet.features.slice(0, 4).map((feature) => (
+                  <li key={feature} className="flex items-start gap-2.5">
+                    <span className="w-1 h-1 rounded-full bg-accent-soft mt-2 shrink-0" />
+                    <span className="font-body text-xs text-white/75 leading-relaxed">
+                      {feature}
+                    </span>
+                  </li>
+                ))}
+              </ul>
               <Link
-                key={pkg.id}
-                href={`/packages/${packageSlug(pkg)}`}
-                className={`group border p-8 text-left flex flex-col transition duration-300 hover:-translate-y-1 hover:shadow-xl active:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber focus-visible:ring-offset-2 focus-visible:ring-offset-base-dark ${
-                  i === 1
-                    ? "border-accent-amber bg-white/5 hover:bg-white/10"
-                    : "border-white/10 bg-white/[0.02] hover:border-accent-amber/50 hover:bg-white/[0.06]"
-                }`}
+                href="/accommodation"
+                className="group inline-flex items-center gap-2 font-body text-xs font-semibold uppercase tracking-[0.14em] text-accent-soft hover:text-white transition-colors duration-300"
               >
-                {i === 1 && (
-                  <span className="text-[9px] uppercase tracking-wider text-accent-amber font-bold font-body mb-3">
-                    Most Popular
-                  </span>
-                )}
-                <h3 className="font-display text-2xl text-white mb-1 group-hover:text-accent-amber transition-colors duration-300">
-                  {pkg.name}
-                </h3>
-                <span className="font-body text-xs uppercase tracking-wider text-white/50 mb-4 block">
-                  {pkg.nights} {pkg.nights === 1 ? "Night" : "Nights"}
-                </span>
-                <p className="font-body text-sm text-white/70 mb-4 flex-grow">
-                  {pkg.inclusions?.[pkg.inclusions.length - 1] ?? pkg.description}
-                </p>
-                {pkg.min_pax && (
-                  <p className="text-xs text-accent-amber font-body font-semibold mb-4">
-                    Min. {pkg.min_pax} guests
-                  </p>
-                )}
-                <span className="flex items-center gap-1.5 font-body text-[10px] uppercase tracking-widest font-semibold text-accent-amber">
-                  See full package
-                  <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
-                </span>
+                Explore the chalets
+                <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+              </Link>
+            </GlassPanel>
+          </div>
+        </div>
+      </section>
+
+      {/* ============ EXPERIENCES ============ */}
+      <section className="py-20 sm:py-28 bg-base-light">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-wrap items-end justify-between gap-6 mb-12">
+            <div className="max-w-xl">
+              <span className="font-body text-[10px] uppercase tracking-[0.28em] text-accent-ink font-semibold">
+                Experiences
+              </span>
+              <h2 className="font-display text-3xl sm:text-5xl text-base-dark mt-4 leading-[1.05]">
+                Days shaped around what you want to see.
+              </h2>
+            </div>
+            <Link
+              href="/activities"
+              className="group inline-flex items-center gap-2 font-body text-xs font-semibold uppercase tracking-[0.14em] text-accent-ink hover:text-base-dark transition-colors"
+            >
+              All activities
+              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+            </Link>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {featured.map((activity) => (
+              <Link
+                key={activity.slug}
+                href={`/activities#${activity.slug}`}
+                className="block rounded-glass focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber focus-visible:ring-offset-2"
+              >
+                <PhotoCard
+                  src={activity.image}
+                  alt={activity.imageAlt}
+                  eyebrow={activity.included}
+                  title={activity.name}
+                />
               </Link>
             ))}
           </div>
+        </div>
+      </section>
 
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Button href="/packages" variant="primary">
-              Compare All Packages
-            </Button>
+      {/* ============ THE PLACE ITSELF — amenity mosaic ============ */}
+      <section className="py-20 sm:py-28 bg-base-cream/40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl mb-12">
+            <span className="font-body text-[10px] uppercase tracking-[0.28em] text-accent-ink font-semibold">
+              The Place
+            </span>
+            <h2 className="font-display text-3xl sm:text-5xl text-base-dark mt-4 leading-[1.05]">
+              A lounge, a boma, and the largest pool in the area.
+            </h2>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {LODGE.amenities.map((amenity, i) => (
+              <PhotoCard
+                key={amenity.slug}
+                src={amenity.image}
+                alt={amenity.imageAlt}
+                title={amenity.name}
+                body={amenity.points[0]}
+                // Break the grid rhythm so it reads as a composition, not a table.
+                aspect={i === 0 || i === 5 ? "aspect-[4/3] lg:aspect-[8/5]" : "aspect-[4/5]"}
+                className={i === 0 || i === 5 ? "lg:col-span-2" : ""}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ============ RATES TEASER ============ */}
+      <section className="relative py-24 sm:py-32 overflow-hidden">
+        <Image
+          src="/images/lodge-night-pool.jpg"
+          alt="Xhabe Safari Lodge at dusk, the main building glowing warm behind the lit pool"
+          fill
+          sizes="100vw"
+          className="object-cover"
+        />
+        <span aria-hidden="true" className="absolute inset-0 bg-black/45" />
+
+        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 text-center">
+          <span className="font-body text-[10px] uppercase tracking-[0.28em] text-accent-soft font-semibold">
+            Rates
+          </span>
+          <h2 className="font-display text-3xl sm:text-5xl text-white mt-4 mb-5 leading-tight">
+            From {CURRENCY} {lowestNightlyRate()} per night.
+          </h2>
+          <p className="font-body text-sm sm:text-base text-white/80 leading-relaxed mb-9 max-w-xl mx-auto">
+            All meals, local drinks, a game drive, the sundowner, a village tour and basketry
+            weaving are included in the nightly rate. Camping is available year-round.
+          </p>
+          <div className="flex flex-wrap gap-3 justify-center">
             <Link
-              href="/gallery"
-              className="group inline-flex items-center gap-2 font-body text-xs font-semibold uppercase tracking-wider text-white/70 hover:text-accent-amber active:text-accent-amber transition duration-300"
+              href="/rates"
+              className="group inline-flex items-center gap-2 rounded-full bg-accent-amber text-white font-body text-xs font-semibold uppercase tracking-[0.14em] px-8 py-4 shadow-xl shadow-black/25 hover:brightness-95 active:scale-[0.98] transition-all duration-300 ease-spring"
             >
-              View the Gallery
+              See full rates
+              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+            </Link>
+            <Link
+              href="/book"
+              className="inline-flex items-center rounded-full glass-dark text-white font-body text-xs font-semibold uppercase tracking-[0.14em] px-8 py-4 hover:bg-white/15 active:scale-[0.98] transition-all duration-300 ease-spring"
+            >
+              Check dates
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ============ LOCAL ============ */}
+      <section className="py-20 sm:py-28 bg-base-light">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+          <div className="relative aspect-[5/4] rounded-glass overflow-hidden">
+            <Image
+              src="/images/curios-detail.jpg"
+              alt="Woven baskets, carved wooden pieces and pottery arranged on a cowhide rug in the lodge lounge"
+              fill
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              className="object-cover"
+            />
+          </div>
+
+          <div>
+            <span className="font-body text-[10px] uppercase tracking-[0.28em] text-accent-ink font-semibold">
+              Local by design
+            </span>
+            <h2 className="font-display text-3xl sm:text-5xl text-base-dark mt-4 mb-6 leading-[1.05]">
+              Every one of our {LODGE.staff} staff is from the Chobe Enclave.
+            </h2>
+            <ul className="space-y-3 mb-8">
+              {LODGE.localSupport.slice(1).map((item) => (
+                <li key={item} className="flex items-start gap-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent-amber mt-2 shrink-0" />
+                  <span className="font-body text-sm text-base-dark/75 leading-relaxed">
+                    {item}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <Link
+              href="/about"
+              className="group inline-flex items-center gap-2 font-body text-xs font-semibold uppercase tracking-[0.14em] text-accent-ink hover:text-base-dark transition-colors"
+            >
+              More about the lodge
               <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </div>

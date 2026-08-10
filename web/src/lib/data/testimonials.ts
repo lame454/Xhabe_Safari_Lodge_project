@@ -1,28 +1,20 @@
 import { createPublicClient } from "@/lib/supabase/server";
 import type { TestimonialRow } from "./types";
 
-export const FALLBACK_TESTIMONIALS: TestimonialRow[] = [
-  {
-    id: "fallback-1",
-    guest_name: "TripAdvisor Guest",
-    source: "TripAdvisor",
-    quote:
-      "The staff went above and beyond. Maatla and Beauty made every meal, every drive, every sunrise feel personal. Nowhere else in Botswana have I felt this cared for.",
-    rating: 5,
-    featured: true,
-    created_at: "",
-  },
-  {
-    id: "fallback-2",
-    guest_name: "Verified Guest",
-    source: "TripAdvisor",
-    quote:
-      "The best sunsets in all of Africa are right here. We watched elephants cross the floodplain from our deck while the sun turned the river to fire. We'll be back.",
-    rating: 5,
-    featured: true,
-    created_at: "",
-  },
-];
+/**
+ * Deliberately empty.
+ *
+ * The demo shipped two invented guest quotes, complete with names and star
+ * ratings, presented as real reviews. Fabricated testimonials are not
+ * something this site should carry, so they have been removed here and from
+ * the database rather than reworded.
+ *
+ * The reviews page renders an honest empty state until real ones exist. To
+ * publish genuine reviews, insert them into the `testimonials` table with
+ * `featured = true` — quoting a guest's own words, with their permission — and
+ * the page fills itself in.
+ */
+export const FALLBACK_TESTIMONIALS: TestimonialRow[] = [];
 
 /** Featured testimonials for the homepage quote band(s), newest first. */
 export async function getFeaturedTestimonials(

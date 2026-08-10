@@ -10,9 +10,9 @@ const config: Config = {
     extend: {
       colors: {
         base: {
-          dark: "var(--color-base-dark)",       // Deep earth forest/charcoal (#1e251c)
-          cream: "var(--color-cream)",         // Sandy gold / warm safari tan (#e5d096)
-          light: "var(--color-cream-light)",   // Warm ivory cream (#fcf9f2)
+          dark: "var(--color-base-dark)",      // Warm near-black ink
+          cream: "var(--color-cream)",         // Warm sand
+          light: "var(--color-cream-light)",   // Near-white warm paper
           // Alias for `light`. Pages were written against `bg-base-cream-light`,
           // which Tailwind never generated from the nested `base` scale — the
           // sections silently fell back to the body background. Kept as a real
@@ -20,9 +20,21 @@ const config: Config = {
           "cream-light": "var(--color-cream-light)",
         },
         accent: {
-          amber: "var(--color-accent-amber)",  // Sunset Orange/Amber (#d97706)
-          gold: "#d4af37",                    // Premium gold accents
+          amber: "var(--color-accent-amber)",  // The logo's burnt orange
+          // Darker cut of the same orange, for small text on light surfaces
+          // where the logo colour alone would fail contrast.
+          ink: "var(--brand-orange-ink)",
+          soft: "var(--brand-orange-soft)",
+          gold: "#d4af37",
         },
+      },
+      borderRadius: {
+        glass: "1.5rem",
+        "glass-lg": "2rem",
+      },
+      transitionTimingFunction: {
+        soft: "cubic-bezier(0.22, 1, 0.36, 1)",
+        spring: "cubic-bezier(0.34, 1.4, 0.64, 1)",
       },
       fontFamily: {
         display: ["var(--font-display)", "serif"],

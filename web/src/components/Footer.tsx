@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Mail, Phone, MessageCircle, MapPin, Facebook, Instagram } from "lucide-react";
+import Logo from "./Logo";
 import { CONTACT, mailtoHref, telHref, whatsappHref } from "@/lib/config/contact";
 
 export default function Footer() {
@@ -11,16 +12,10 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
           {/* Column 1: Brand Info */}
           <div className="flex flex-col space-y-4">
-            <Link href="/" className="inline-block">
-              <span className="font-display text-3xl tracking-widest text-white hover:text-base-cream transition duration-300">
-                XHABE
-              </span>
-              <span className="font-body text-[10px] uppercase tracking-[0.35em] text-white/50 block">
-                Safari Lodge
-              </span>
-            </Link>
+            <Logo variant="light" />
             <p className="font-body text-sm text-white/70 max-w-sm leading-relaxed">
-              Experience the untamed beauty of Chobe National Park. Overlooking the river floodplains, our intimate luxury tented lodge offers an authentic African wilderness connection.
+              Nine luxury tented chalets on a plateau above the Chobe River floodplain, five
+              kilometres from Chobe National Park and the Namibian border.
             </p>
             {/* Social Icons */}
             <div className="flex space-x-4 pt-2">
@@ -61,9 +56,9 @@ export default function Footer() {
             <div className="grid grid-cols-2 gap-x-2 text-sm font-body text-white/80">
               {[
                 { href: "/about", label: "About Us" },
-                { href: "/accommodation", label: "Accommodation" },
+                { href: "/accommodation", label: "The Chalets" },
                 { href: "/activities", label: "Activities" },
-                { href: "/packages", label: "Packages & Rates" },
+                { href: "/rates", label: "Rates" },
                 { href: "/gallery", label: "Gallery" },
                 { href: "/reviews", label: "Guest Reviews" },
                 { href: "/contact", label: "Contact" },

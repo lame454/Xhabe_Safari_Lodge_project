@@ -1,198 +1,138 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, ChevronDown } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import Logo from "./Logo";
 
-export default function NavBar() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isLodgeDropdownOpen, setIsLodgeDropdownOpen] = useState(false);
+const LINKS = [
+  { name: "The Lodge", href: "/accommodation" },
+  { name: "Activities", href: "/activities" },
+  { name: "Rates", href: "/rates" },
+  { name: "Gallery", href: "/gallery" },
+  { name: "About", href: "/about" },
+  { name: "Contact", href: "/contact" },
+];
+
+/**
+ * Floating navigation.
+ *
+ * Over a hero photograph the bar is invisible and the links sit directly on the
+ * image; once the page scrolls it condenses onto a glass plate. That keeps the
+ * photography unobstructed at the top of the page, which is the whole point of
+ * a photo-led design, without ever leaving the links unreadable.
+ */
+export default function NavBar({ overHero = false }: { overHero?: boolean }) {
+  const [scrolled, setScrolled] = useState(false);
+  const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
-  const toggleMenu = () => setIsOpen(!isOpen);
+  useEffect(() => {
+    function onScroll() {
+      setScrolled(window.scrollY > 24);
+    }
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
-  const isActive = (path: string) => pathname === path;
+  // A route change should never leave the mobile sheet hanging open.
+  useEffect(() => setOpen(false), [pathname]);
 
-  const lodgeLinks = [
-    { name: "Accommodation", href: "/accommodation" },
-    { name: "Activities", href: "/activities" },
-    { name: "Packages & Rates", href: "/packages" },
-  ];
+  // The sheet covers the page, so the page behind it must not scroll.
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [open]);
 
-  const mainLinks = [
-    { name: "About", href: "/about" },
-    { name: "Gallery", href: "/gallery" },
-    { name: "Reviews", href: "/reviews" },
-    { name: "Contact", href: "/contact" },
-  ];
+  // Transparent only while over a hero and still at the top of the page.
+  const bare = overHero && !scrolled;
+  const tone = bare ? "light" : "dark";
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-base-dark/5 glass-effect">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
-          {/* Logo / Brand Name */}
-          <div className="flex-shrink-0">
-            <Link href="/" className="group flex flex-col">
-              <span className="font-display text-2xl tracking-widest text-base-dark group-hover:text-accent-amber transition duration-300">
-                XHABE
-              </span>
-              <span className="font-body text-[9px] uppercase tracking-[0.35em] text-base-dark/60 -mt-1">
-                Safari Lodge
-              </span>
-            </Link>
-          </div>
+    <header
+      className={`fixed top-0 inset-x-0 z-50 transition-all duration-500 ease-soft ${
+        bare ? "bg-transparent" : "glass-bar"
+      }`}
+    >
+      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div
+          className={`flex items-center justify-between transition-all duration-500 ease-soft ${
+            bare ? "h-24" : "h-20"
+          }`}
+        >
+          <Logo variant={tone === "light" ? "light" : "dark"} />
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-8">
-            <Link
-              href="/"
-              className={`font-body text-sm font-medium tracking-wide transition duration-300 hover:text-accent-amber ${
-                isActive("/") ? "text-accent-amber font-semibold" : "text-base-dark/85"
-              }`}
-            >
-              Home
-            </Link>
+          {/* Desktop links */}
+          <div className="hidden lg:flex items-center gap-1">
+            {LINKS.map((link) => {
+              const active = pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  aria-current={active ? "page" : undefined}
+                  className={`relative px-4 py-2 rounded-full font-body text-sm transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber ${
+                    bare
+                      ? "text-white/85 hover:text-white hover:bg-white/10"
+                      : "text-base-dark/75 hover:text-base-dark hover:bg-base-dark/[0.06]"
+                  } ${active ? (bare ? "text-white bg-white/15" : "text-accent-ink bg-accent-amber/10") : ""}`}
+                >
+                  {link.name}
+                </Link>
+              );
+            })}
 
-            {/* Lodge Dropdown */}
-            <div
-              className="relative"
-              onMouseEnter={() => setIsLodgeDropdownOpen(true)}
-              onMouseLeave={() => setIsLodgeDropdownOpen(false)}
-            >
-              <button
-                type="button"
-                aria-haspopup="true"
-                aria-expanded={isLodgeDropdownOpen}
-                onClick={() => setIsLodgeDropdownOpen((open) => !open)}
-                onKeyDown={(event) => {
-                  if (event.key === "Escape") setIsLodgeDropdownOpen(false);
-                }}
-                className={`flex items-center font-body text-sm font-medium tracking-wide transition duration-300 hover:text-accent-amber ${
-                  lodgeLinks.some((l) => isActive(l.href))
-                    ? "text-accent-amber font-semibold"
-                    : "text-base-dark/85"
-                }`}
-              >
-                The Lodge
-                <ChevronDown className="ml-1 w-4 h-4" />
-              </button>
-
-              {isLodgeDropdownOpen && (
-                <div role="menu" className="absolute left-0 mt-0 w-48 bg-white border border-base-dark/5 rounded shadow-lg py-2 transition duration-200">
-                  {lodgeLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      role="menuitem"
-                      onClick={() => setIsLodgeDropdownOpen(false)}
-                      className={`block px-4 py-2 text-sm font-body hover:bg-base-light/30 hover:text-accent-amber transition ${
-                        isActive(link.href) ? "text-accent-amber font-semibold bg-base-light/10" : "text-base-dark/80"
-                      }`}
-                    >
-                      {link.name}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {mainLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`font-body text-sm font-medium tracking-wide transition duration-300 hover:text-accent-amber ${
-                  isActive(link.href) ? "text-accent-amber font-semibold" : "text-base-dark/85"
-                }`}
-              >
-                {link.name}
-              </Link>
-            ))}
-
-            {/* CTA Button */}
             <Link
               href="/book"
-              className="font-body text-xs font-semibold uppercase tracking-wider bg-accent-amber text-white px-5 py-3 hover:bg-base-dark transition duration-300"
+              className="ml-3 inline-flex items-center rounded-full bg-accent-amber text-white font-body text-xs font-semibold uppercase tracking-[0.12em] px-6 py-3 shadow-lg shadow-accent-amber/25 hover:brightness-95 active:scale-[0.98] transition-all duration-300 ease-spring focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber focus-visible:ring-offset-2"
             >
-              Book Now
+              Book
             </Link>
-          </nav>
-
-          {/* Mobile hamburger button */}
-          <div className="flex lg:hidden">
-            <button
-              onClick={toggleMenu}
-              type="button"
-              // Negative margin + padding keeps the icon visually 24px while
-              // giving it a 40px touch target.
-              className="-m-2 p-2 text-base-dark hover:text-accent-amber active:text-accent-amber transition duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
-              aria-controls="mobile-menu"
-              aria-expanded={isOpen}
-            >
-              <span className="sr-only">Open main menu</span>
-              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
           </div>
+
+          {/* Mobile toggle — 44px target */}
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-controls="mobile-nav"
+            aria-label={open ? "Close menu" : "Open menu"}
+            className={`lg:hidden -mr-2 p-3 rounded-full transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber ${
+              bare ? "text-white hover:bg-white/10" : "text-base-dark hover:bg-base-dark/[0.06]"
+            }`}
+          >
+            {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
         </div>
-      </div>
+      </nav>
 
-      {/* Mobile Menu */}
-      {isOpen && (
-        <div className="lg:hidden bg-white border-b border-base-dark/5" id="mobile-menu">
-          <div className="px-4 pt-2 pb-6 space-y-3">
-            <Link
-              href="/"
-              onClick={() => setIsOpen(false)}
-              className={`block py-2 border-b border-gray-100 font-body text-base ${
-                isActive("/") ? "text-accent-amber font-semibold" : "text-base-dark/80"
-              }`}
-            >
-              Home
-            </Link>
-
-            {/* Expended dropdown links inline for mobile */}
-            <div className="py-2 border-b border-gray-100">
-              <span className="font-body text-xs uppercase tracking-wider text-base-dark/40 font-semibold block mb-2">
-                The Lodge
-              </span>
-              <div className="pl-4 space-y-2">
-                {lodgeLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setIsOpen(false)}
-                    className={`block py-1 font-body text-sm ${
-                      isActive(link.href) ? "text-accent-amber font-semibold" : "text-base-dark/70"
-                    }`}
-                  >
-                    {link.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            {mainLinks.map((link) => (
+      {/* Mobile sheet */}
+      {open && (
+        <div id="mobile-nav" className="lg:hidden glass-bar border-t border-base-dark/5">
+          <div className="px-4 sm:px-6 py-4 flex flex-col">
+            {LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                onClick={() => setIsOpen(false)}
-                className={`block py-2 border-b border-gray-100 font-body text-base ${
-                  isActive(link.href) ? "text-accent-amber font-semibold" : "text-base-dark/80"
+                className={`py-3.5 font-body text-base border-b border-base-dark/[0.07] transition-colors ${
+                  pathname === link.href ? "text-accent-ink font-semibold" : "text-base-dark/80"
                 }`}
               >
                 {link.name}
               </Link>
             ))}
-
-            <div className="pt-4">
-              <Link
-                href="/book"
-                onClick={() => setIsOpen(false)}
-                className="block text-center font-body text-sm font-semibold uppercase tracking-wider bg-accent-amber text-white py-3 hover:bg-base-dark transition"
-              >
-                Book Now
-              </Link>
-            </div>
+            <Link
+              href="/book"
+              className="mt-5 mb-1 text-center rounded-full bg-accent-amber text-white font-body text-sm font-semibold uppercase tracking-[0.12em] py-4 shadow-lg shadow-accent-amber/25"
+            >
+              Check availability
+            </Link>
           </div>
         </div>
       )}

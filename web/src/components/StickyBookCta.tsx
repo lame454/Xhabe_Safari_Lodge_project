@@ -47,7 +47,7 @@ export default function StickyBookCta({ packageSlug, label = "Book Your Stay" }:
       <div className="glass-effect border-t border-base-dark/10 shadow-[0_-4px_24px_rgba(30,37,28,0.08)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
           <p className="hidden sm:block font-body text-xs text-base-dark/70 leading-snug">
-            <span className="font-semibold text-base-dark">Only 8 chalets.</span> Check live
+            <span className="font-semibold text-base-dark">Only 9 chalets.</span> Check live
             availability for your dates.
           </p>
 

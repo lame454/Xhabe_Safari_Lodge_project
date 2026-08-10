@@ -1,40 +1,133 @@
 import type { Metadata } from "next";
-import { Star } from "lucide-react";
-import Footer from "@/components/Footer";
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight, Star } from "lucide-react";
 import NavBar from "@/components/NavBar";
-import Button from "@/components/Button";
+import Footer from "@/components/Footer";
 import StickyBookCta from "@/components/StickyBookCta";
+import { GlassPanel } from "@/components/Glass";
+import { CONTACT, mailtoHref } from "@/lib/config/contact";
 import { getFeaturedTestimonials } from "@/lib/data/testimonials";
 
 export const metadata: Metadata = {
   title: "Guest Reviews | Xhabe Safari Lodge",
-  description: "Read guest stories from stays at Xhabe Safari Lodge in the Chobe District, Botswana.",
+  description:
+    "Guest reviews of Xhabe Safari Lodge in the Chobe District, Botswana.",
 };
 
 export default async function ReviewsPage() {
   const { testimonials } = await getFeaturedTestimonials(12);
 
-  return <><NavBar />
-    <main>
-      <section className="bg-base-dark text-white py-24 md:py-32">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <span className="text-[10px] uppercase tracking-[0.3em] text-accent-amber font-semibold font-body">Guest Stories</span>
-          <h1 className="font-display text-5xl md:text-6xl mt-4">The Xhabe Experience.</h1>
-          <p className="font-body text-white/70 mt-6 max-w-2xl mx-auto leading-relaxed">Thoughtful hospitality, wild horizons, and the kind of memories that stay with you long after the journey home.</p>
+  return (
+    <>
+      <NavBar overHero />
+
+      <section className="relative h-[52svh] min-h-[340px] flex items-end overflow-hidden">
+        <Image
+          src="/images/lounge-open-side.jpg"
+          alt="The lounge at Xhabe Safari Lodge, open on two sides to the bush, with wishbone chairs on a wooden deck"
+          fill
+          sizes="100vw"
+          priority
+          className="object-cover"
+        />
+        <span aria-hidden="true" className="absolute inset-0 scrim-bottom" />
+        <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 sm:pb-14">
+          <span className="font-body text-[10px] uppercase tracking-[0.3em] text-accent-soft font-semibold">
+            Guest Reviews
+          </span>
+          <h1 className="font-display text-5xl sm:text-6xl text-white mt-4 leading-none">
+            In our guests&apos; words.
+          </h1>
         </div>
       </section>
-      <section className="py-20 bg-base-cream-light">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-6">
-          {testimonials.map((review) => <article key={review.id} className="bg-white p-8 border border-base-dark/10 flex flex-col">
-            <div className="flex gap-1 text-accent-amber mb-6" aria-label={`${review.rating ?? 5} out of 5 stars`}>
-              {Array.from({ length: review.rating ?? 5 }, (_, index) => <Star key={index} className="w-4 h-4 fill-current" />)}
+
+      <section className="py-16 sm:py-24 bg-base-light">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          {testimonials.length === 0 ? (
+            /*
+             * No invented quotes. The demo carried two fabricated reviews with
+             * names and star ratings; they have been removed rather than
+             * reworded. This state disappears the moment real ones are added.
+             */
+            <GlassPanel className="p-8 sm:p-12 text-center max-w-2xl mx-auto">
+              <h2 className="font-display text-2xl sm:text-3xl text-base-dark mb-4">
+                Reviews are on their way.
+              </h2>
+              <p className="font-body text-sm text-base-dark/70 leading-relaxed mb-8">
+                We would rather show you nothing than show you words no guest actually said. If
+                you have stayed with us, we would genuinely like to hear how it went — and with
+                your permission we will put it here.
+              </p>
+              <div className="flex flex-wrap gap-3 justify-center">
+                <a
+                  href={mailtoHref("My stay at Xhabe Safari Lodge")}
+                  className="group inline-flex items-center gap-2 rounded-full bg-accent-amber text-white font-body text-xs font-semibold uppercase tracking-[0.14em] px-7 py-3.5 hover:brightness-95 active:scale-[0.98] transition-all duration-300 ease-spring"
+                >
+                  Share your stay
+                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </a>
+                <Link
+                  href="/gallery"
+                  className="inline-flex items-center rounded-full border border-base-dark/15 text-base-dark font-body text-xs font-semibold uppercase tracking-[0.14em] px-7 py-3.5 hover:bg-base-dark hover:text-white active:scale-[0.98] transition-all duration-300 ease-spring"
+                >
+                  See the lodge instead
+                </Link>
+              </div>
+              <p className="font-body text-[11px] text-base-dark/40 mt-6">
+                Or write to us at {CONTACT.email}
+              </p>
+            </GlassPanel>
+          ) : (
+            <div className="grid md:grid-cols-2 gap-4">
+              {testimonials.map((review) => (
+                <GlassPanel key={review.id} as="article" className="p-7 sm:p-9 flex flex-col">
+                  <div
+                    className="flex gap-1 text-accent-amber mb-5"
+                    aria-label={`${review.rating ?? 5} out of 5 stars`}
+                  >
+                    {Array.from({ length: review.rating ?? 5 }, (_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-current" />
+                    ))}
+                  </div>
+                  <blockquote className="font-display text-xl text-base-dark leading-relaxed flex-grow">
+                    &ldquo;{review.quote}&rdquo;
+                  </blockquote>
+                  <footer className="font-body text-[11px] uppercase tracking-[0.16em] text-base-dark/50 mt-7">
+                    {review.guest_name} · {review.source}
+                  </footer>
+                </GlassPanel>
+              ))}
             </div>
-            <blockquote className="font-display text-xl text-base-dark leading-relaxed flex-grow">“{review.quote}”</blockquote>
-            <footer className="font-body text-xs uppercase tracking-wider text-base-dark/55 mt-8">{review.guest_name} · {review.source}</footer>
-          </article>)}
+          )}
         </div>
       </section>
-      <section className="py-20 text-center bg-white"><h2 className="font-display text-3xl text-base-dark">Ready for your own story?</h2><div className="mt-8"><Button href="/book" variant="primary" showArrow>Check Availability</Button></div></section>
-    </main><StickyBookCta /><Footer />
-  </>;
+
+      <section className="relative py-24 overflow-hidden">
+        <Image
+          src="/images/sunset-pool-chalets.jpg"
+          alt="Sunset over the pool at Xhabe Safari Lodge with the chalets in silhouette"
+          fill
+          sizes="100vw"
+          className="object-cover"
+        />
+        <span aria-hidden="true" className="absolute inset-0 bg-black/50" />
+        <div className="relative max-w-2xl mx-auto px-4 sm:px-6 text-center">
+          <h2 className="font-display text-3xl sm:text-4xl text-white mb-8">
+            Ready for your own story?
+          </h2>
+          <Link
+            href="/book"
+            className="group inline-flex items-center gap-2 rounded-full bg-accent-amber text-white font-body text-xs font-semibold uppercase tracking-[0.14em] px-8 py-4 shadow-xl shadow-black/25 hover:brightness-95 active:scale-[0.98] transition-all duration-300 ease-spring"
+          >
+            Check availability
+            <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+          </Link>
+        </div>
+      </section>
+
+      <StickyBookCta />
+      <Footer />
+    </>
+  );
 }

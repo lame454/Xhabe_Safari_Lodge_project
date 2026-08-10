@@ -2,71 +2,196 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===========================================================================
+   Xhabe Safari Lodge — design tokens
+   ---------------------------------------------------------------------------
+   The palette is taken from the lodge's own logo: a burnt-orange sun behind a
+   charcoal giraffe and baobab. Everything else is warm neutral, so photography
+   supplies the colour and the interface stays out of its way.
+   =========================================================================== */
 :root {
-  /* Brand Palette Variables */
-  --color-base-dark: #1e251c;       /* Deep Earth Olive/Forest Green */
-  --color-cream: #e5d096;           /* Sandy Gold/Warm Safari Tan */
-  --color-cream-light: #fcf9f2;     /* Warm Ivory Cream Background */
-  --color-accent-amber: #d97706;     /* Sunset Orange/Amber */
+  /* Brand ---------------------------------------------------------------- */
+  --brand-orange: #e8631c;        /* the sun in the logo */
+  --brand-orange-soft: #f4914f;
+  /* Darkened for small text: the logo orange is ~3:1 on white, which is fine
+     for large type and fills but fails body-text contrast. */
+  --brand-orange-ink: #b8480f;
+  --brand-charcoal: #4a4a4c;      /* the giraffe and wordmark */
+
+  /* Surfaces — warm neutrals, never pure grey ---------------------------- */
+  --ink: #211f1c;
+  --ink-soft: #4b463f;
+  --sand: #efe7db;
+  --sand-light: #faf6f0;
+  --paper: #ffffff;
+
+  /* Legacy aliases. The whole site is written against these names, so
+     re-pointing them here re-skins every existing component at once. */
+  --color-base-dark: var(--ink);
+  --color-cream: var(--sand);
+  --color-cream-light: var(--sand-light);
+  --color-accent-amber: var(--brand-orange);
+
+  /* Glass ---------------------------------------------------------------- */
+  --glass-blur: 24px;
+  --glass-saturate: 180%;
+
+  /* Motion — one ease for entrances, one springy one for interactions ---- */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
 }
 
-/* Global resets and typography mappings */
 body {
-  background-color: var(--color-cream-light);
-  color: var(--color-base-dark);
-  font-family: var(--font-body), sans-serif;
+  background-color: var(--sand-light);
+  color: var(--ink);
+  font-family: var(--font-body), system-ui, sans-serif;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display), serif;
   font-weight: 400;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
 }
 
-/* Smooth Scrolling */
 html {
   scroll-behavior: smooth;
 }
 
-/* Custom glassmorphism or overlays */
-.glass-effect {
-  background: rgba(252, 249, 242, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+/* ===========================================================================
+   Liquid glass
+   ---------------------------------------------------------------------------
+   Three parts make a surface read as glass rather than as a translucent box:
+     1. blur + saturation, so what shows through is diffused and colour-rich;
+     2. a bright hairline along the top edge — the specular highlight where
+        light catches a real bevel;
+     3. a soft, wide shadow beneath, so it floats above the photograph.
+   Remove any one and it flattens into a plain overlay.
+   =========================================================================== */
+.glass {
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 16px 48px -20px rgba(33, 31, 28, 0.35);
 }
 
-.hero-overlay {
-  background: linear-gradient(to bottom, rgba(30, 37, 28, 0.4), rgba(30, 37, 28, 0.75));
+/* For glass sitting on photography, where the plate must stay legible. */
+.glass-dark {
+  background: rgba(28, 26, 23, 0.42);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 20px 60px -24px rgba(0, 0, 0, 0.6);
+}
+
+/* Thinner variant for bars and pills that overlay content while scrolling. */
+.glass-bar {
+  background: rgba(250, 246, 240, 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(33, 31, 28, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 /*
- * Interaction affordances — the "Explore →" / "Gallery" hints that tell a
- * visitor a card or image is pressable.
- *
- * The distinction that matters is whether the device can hover, not how wide
- * the screen is: a touch user never triggers a hover reveal, so hiding the hint
- * behind one leaves them with no signal at all. `@media (hover: hover)` asks
- * that question directly, instead of using viewport width as a proxy for it.
- *
- * Written as plain CSS rather than stacked `md:opacity-*` utilities because the
- * utility form depends on cascade order between a base rule and a media-query
- * rule of equal specificity — which Next's dev server breaks by injecting
- * duplicate stylesheets, leaving the hint permanently visible on desktop.
+ * Without backdrop-filter the panels would be near-transparent and the text
+ * on them unreadable, so fall back to near-opaque surfaces.
  */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass      { background: rgba(255, 255, 255, 0.95); }
+  .glass-dark { background: rgba(28, 26, 23, 0.88); }
+  .glass-bar  { background: rgba(250, 246, 240, 0.97); }
+}
+
+/* ===========================================================================
+   Photographic scrims
+   Gradients rather than flat tints: the image stays visible where there is no
+   text, and only darkens where type actually sits.
+   =========================================================================== */
+.scrim-bottom {
+  background: linear-gradient(
+    to top,
+    rgba(20, 18, 16, 0.82) 0%,
+    rgba(20, 18, 16, 0.45) 32%,
+    rgba(20, 18, 16, 0.08) 62%,
+    rgba(20, 18, 16, 0) 100%
+  );
+}
+
+.scrim-full {
+  background: linear-gradient(
+    to top,
+    rgba(20, 18, 16, 0.75) 0%,
+    rgba(20, 18, 16, 0.3) 50%,
+    rgba(20, 18, 16, 0.45) 100%
+  );
+}
+
+/* Legacy name, still used by the inner page heroes. */
+.hero-overlay {
+  background: linear-gradient(
+    to top,
+    rgba(20, 18, 16, 0.8) 0%,
+    rgba(20, 18, 16, 0.4) 40%,
+    rgba(20, 18, 16, 0.15) 100%
+  );
+}
+
+.glass-effect {
+  background: rgba(250, 246, 240, 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+/* ===========================================================================
+   Interaction affordances
+   Keyed on whether the pointer can hover, not on screen width: a touch user
+   never triggers a hover reveal, so hiding the hint behind one leaves them
+   with no signal at all.
+   =========================================================================== */
 .affordance {
   opacity: 1;
-  transition: opacity 300ms ease;
+  transition: opacity 300ms var(--ease-out-soft);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .affordance {
-    opacity: 0;
-  }
-
+  .affordance { opacity: 0; }
   .group:hover .affordance,
   .group:focus-visible .affordance,
-  .group:focus-within .affordance {
-    opacity: 1;
+  .group:focus-within .affordance { opacity: 1; }
+}
+
+/* ===========================================================================
+   Entrance motion
+   =========================================================================== */
+@keyframes rise {
+  from { opacity: 0; transform: translate3d(0, 16px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+.animate-rise {
+  animation: rise 700ms var(--ease-out-soft) both;
+}
+
+/*
+ * Honour the OS setting. Motion here is decorative — nothing depends on it to
+ * be understood — so it is cut entirely rather than merely shortened.
+ */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }
