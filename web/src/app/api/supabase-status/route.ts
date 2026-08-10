@@ -1,13 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createPublicClient, createAdminClient } from "@/lib/supabase/server";
+import { isAuthenticated } from "@/lib/admin/auth";
 
-function maskKey(key: string | undefined): string {
-  if (!key) return "missing";
-  if (key.length <= 10) return "present but too short";
-  return `${key.slice(0, 5)}...${key.slice(-5)} (length: ${key.length})`;
+/*
+ * Diagnostics are for whoever runs the lodge, not for the public internet.
+ *
+ * This route previously answered anonymously and reported the first and last
+ * five characters of the service role key together with its exact length —
+ * enough for someone to confirm a guessed or partially-leaked key — plus the
+ * fact that RLS-bypassing credentials were configured and working. It was
+ * live on the public domain.
+ *
+ * It now requires the same admin session as /admin, and reports only whether
+ * each key is present. `npm run check-supabase` gives the same picture
+ * locally, where printing to your own terminal is fine.
+ */
+function keyStatus(key: string | undefined): string {
+  return key ? "configured" : "missing";
 }
 
 export async function GET(request: NextRequest) {
+  if (!(await isAuthenticated())) {
+    return NextResponse.json({ error: "Not authorised." }, { status: 401 });
+  }
+
   // Ensure we opt out of static rendering so environment variables are checked dynamically at request time
   // (though in Next.js 15, dynamic route handlers are evaluated dynamically anyway, especially when they touch cookies/headers or are in dynamic mode)
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -17,9 +33,9 @@ export async function GET(request: NextRequest) {
   const diagnostics = {
     timestamp: new Date().toISOString(),
     environment: {
-      NEXT_PUBLIC_SUPABASE_URL: url ? url : "missing",
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: maskKey(anonKey),
-      SUPABASE_SERVICE_ROLE_KEY: maskKey(serviceRoleKey),
+      NEXT_PUBLIC_SUPABASE_URL: keyStatus(url),
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: keyStatus(anonKey),
+      SUPABASE_SERVICE_ROLE_KEY: keyStatus(serviceRoleKey),
     },
     publicClient: {
       configured: !!(url && anonKey),

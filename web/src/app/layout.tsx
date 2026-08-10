@@ -19,6 +19,13 @@ const nunitoSans = Nunito_Sans({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  /*
+   * Both www.xhabesafari.com and the apex serve the site, which without this
+   * looks to a search engine like two separate sites carrying identical
+   * content. `"./"` resolves against metadataBase and the current path, so
+   * every page declares the apex as its one true address.
+   */
+  alternates: { canonical: "./" },
   title: "Xhabe Safari Lodge | Chobe Riverfront, Botswana",
   description: "An intimate 8-room tented luxury lodge and camping experience overlooking the Chobe River floodplains and Namibian border in Botswana.",
   icons: {
