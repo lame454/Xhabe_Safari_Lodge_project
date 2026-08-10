@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Gilda_Display, Nunito_Sans } from "next/font/google";
 import "./globals.css";
+import { SITE_URL } from "@/lib/config/site";
 
 const gildaDisplay = Gilda_Display({
   subsets: ["latin"],
@@ -17,7 +18,7 @@ const nunitoSans = Nunito_Sans({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://xhabesafarilodge.com"),
+  metadataBase: new URL(SITE_URL),
   title: "Xhabe Safari Lodge | Chobe Riverfront, Botswana",
   description: "An intimate 8-room tented luxury lodge and camping experience overlooking the Chobe River floodplains and Namibian border in Botswana.",
   icons: {

@@ -1,6 +1,5 @@
 import type { MetadataRoute } from "next";
-
-const SITE_URL = "https://xhabesafarilodge.com";
+import { SITE_URL } from "@/lib/config/site";
 
 const routes = [
   "",

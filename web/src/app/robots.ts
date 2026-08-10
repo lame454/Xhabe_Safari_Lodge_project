@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { absoluteUrl } from "@/lib/config/site";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -9,6 +10,6 @@ export default function robots(): MetadataRoute.Robots {
       // too — an indexed login page is an invitation to guess at it.
       disallow: ["/admin", "/api/admin"],
     },
-    sitemap: "https://xhabesafarilodge.com/sitemap.xml",
+    sitemap: absoluteUrl("/sitemap.xml"),
   };
 }
