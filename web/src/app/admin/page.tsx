@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { isAdminConfigured, isAuthenticated } from "@/lib/admin/auth";
 import { getAdminBookings, getAdminEnquiries } from "@/lib/data/adminBookings";
 import { getAvailabilityCalendar } from "@/lib/data/availability";
+import { emailHealth } from "@/lib/email";
 import AdminLogin from "./AdminLogin";
 import AdminDashboard from "./AdminDashboard";
 
@@ -51,6 +52,9 @@ export default async function AdminPage() {
       enquiries={enquiries}
       occupancy={days}
       loadError={error}
+      // Read on the server: it inspects environment variables, which the
+      // browser has no business seeing.
+      email={emailHealth()}
     />
   );
 }

@@ -126,6 +126,7 @@ export default function ContactForm() {
             id="guests"
             name="guests"
             type="number"
+            inputMode="numeric"
             min={1}
             max={16}
             className="font-body text-sm border border-base-dark/20 bg-white px-4 py-3 focus:outline-none focus:border-accent-amber transition-colors duration-200"
