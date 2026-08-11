@@ -29,8 +29,22 @@ export const IS_TEST_CONTACT_CONFIG = true;
  * being stripped at each call site.
  */
 export const CONTACT = {
-  /** TEST inbox — see TODO above. */
-  email: "vambulame5@gmail.com",
+  /*
+   * TEST inbox — see TODO above.
+   *
+   * This is deliberately the *Resend account owner's* address, and that
+   * coupling is load-bearing while no sending domain is verified: the shared
+   * onboarding sender is allowed to deliver to the account owner and nobody
+   * else, so this is the one value that lets a new-booking or enquiry
+   * notification actually arrive. Pointing it at any other inbox silently goes
+   * back to losing them — the previous value, vambulame5@gmail.com, was
+   * rejected with a 403 every time.
+   *
+   * Guest-facing mail is unaffected and still undeliverable; only a verified
+   * domain fixes that. Note this address is shown publicly wherever the site
+   * lists a contact email, so it wants replacing before launch either way.
+   */
+  email: "knightlame454@gmail.com",
 
   /** Human-readable phone number, for on-screen text. */
   phoneDisplay: "+267 72 109 942",
