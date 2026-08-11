@@ -76,6 +76,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   // Email the guest, if asked to and if this is a decision worth telling them
   // about — moving something back to pending is internal bookkeeping.
   let guestNotified: boolean | null = null;
+  let guestNotifyError: string | null = null;
   if (parsed.data.notifyGuest && parsed.data.status !== "pending") {
     // Look up the package name so the message can state what they booked.
     let packageName: string | null = null;
@@ -89,13 +90,16 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     }
 
     // The status change is already committed; a mail failure must not undo it.
-    const { sent } = await sendBookingDecisionEmail(
+    const { sent, reason } = await sendBookingDecisionEmail(
       { ...data, package_name: packageName },
       parsed.data.status,
       parsed.data.note
     );
     guestNotified = sent;
+    // This route is behind the admin session, so the reason can be shown as
+    // written — staff are the people who can act on it.
+    guestNotifyError = reason;
   }
 
-  return NextResponse.json({ booking: data, guestNotified });
+  return NextResponse.json({ booking: data, guestNotified, guestNotifyError });
 }

@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Minus, Plus } from "lucide-react";
 import AvailabilityCalendar from "./AvailabilityCalendar";
-import { MAX_ADULTS_PER_CHALET, TOTAL_CHALETS, roomsNeeded as chaletsFor } from "@/lib/data/capacity";
+import { MAX_ADULTS_PER_CHALET, MAX_GUESTS, roomsNeeded as chaletsFor } from "@/lib/data/capacity";
 import type { PackageRow } from "@/lib/data/types";
 
 interface Props {
@@ -23,7 +24,20 @@ export default function BookingForm({ packages, preselectedPackageId }: Props) {
   // the guest count both need to react to them.
   const [checkIn, setCheckIn] = useState<string | null>(null);
   const [checkOut, setCheckOut] = useState<string | null>(null);
+
+  /**
+   * Party size is held twice: `guests` is the committed number everything else
+   * reads, `guestsText` is the raw contents of the box.
+   *
+   * They are separate so the box can be *empty* while it is being edited. A
+   * single controlled number that coerces "" straight back to a digit can never
+   * be cleared, which is what made this field so awkward on a phone: deleting
+   * the "2" to type "8" snapped the box back to "1" before the 8 was typed, and
+   * you ended up with "18". Nothing is committed until the field is left, so a
+   * half-typed number is allowed to sit there.
+   */
   const [guests, setGuests] = useState(2);
+  const [guestsText, setGuestsText] = useState("2");
 
   const roomsNeeded = chaletsFor(guests);
   const datesChosen = Boolean(checkIn && checkOut);
@@ -32,6 +46,42 @@ export default function BookingForm({ packages, preselectedPackageId }: Props) {
   function resetCheck() {
     setStatus("idle");
     setMessage(null);
+  }
+
+  /** Keystrokes in the box. Accepts an empty field and rejects non-digits. */
+  function handleGuestsInput(raw: string) {
+    if (!/^\d*$/.test(raw)) return;
+    setGuestsText(raw);
+
+    // Commit as you type only while the number is usable, so the chalet count
+    // below keeps up. Anything out of range waits for the blur to clamp it.
+    const parsed = Number.parseInt(raw, 10);
+    if (parsed >= 1 && parsed <= MAX_GUESTS && parsed !== guests) {
+      setGuests(parsed);
+      resetCheck();
+    }
+  }
+
+  /** Leaving the field settles it: empty restores the last good number. */
+  function commitGuests() {
+    const parsed = Number.parseInt(guestsText, 10);
+    const next = Number.isNaN(parsed) ? guests : Math.min(MAX_GUESTS, Math.max(1, parsed));
+
+    setGuestsText(String(next));
+    if (next !== guests) {
+      setGuests(next);
+      resetCheck();
+    }
+  }
+
+  /** The −/+ buttons, which are the easy way to adjust this on a phone. */
+  function stepGuests(delta: number) {
+    const next = Math.min(MAX_GUESTS, Math.max(1, guests + delta));
+    if (next === guests) return;
+
+    setGuests(next);
+    setGuestsText(String(next));
+    resetCheck();
   }
 
   function handleRangeChange(range: { checkIn: string | null; checkOut: string | null }) {
@@ -129,23 +179,45 @@ export default function BookingForm({ packages, preselectedPackageId }: Props) {
         <label htmlFor="guests" className="font-body text-xs uppercase tracking-wider text-base-dark/50 font-semibold">
           Guests *
         </label>
-        <input
-          id="guests"
-          name="guests"
-          type="number"
-          min={1}
-          max={TOTAL_CHALETS * MAX_ADULTS_PER_CHALET}
-          value={guests}
-          required
-          onChange={(event) => {
-            setGuests(Number(event.target.value) || 1);
-            resetCheck();
-          }}
-          className="font-body text-sm border border-base-dark/20 bg-white px-4 py-3 focus:outline-none focus:border-accent-amber"
-        />
-        <p className="font-body text-[11px] text-base-dark/45 leading-snug">
+        {/*
+          A text box rather than type="number": on an invalid keystroke a number
+          input reports its value as "", which is indistinguishable from the
+          guest clearing the field, and its spinners are invisible on a phone
+          anyway. inputMode="numeric" still brings up the numeric keypad, and
+          the buttons below replace the spinners with targets a thumb can hit.
+        */}
+        <div className="flex items-stretch border border-base-dark/20 bg-white focus-within:border-accent-amber">
+          <StepperButton
+            label="One guest fewer"
+            onClick={() => stepGuests(-1)}
+            disabled={guests <= 1}
+            icon={<Minus className="w-4 h-4" />}
+          />
+          <input
+            id="guests"
+            name="guests"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete="off"
+            value={guestsText}
+            aria-describedby="guests-hint"
+            onChange={(event) => handleGuestsInput(event.target.value)}
+            onBlur={commitGuests}
+            onFocus={(event) => event.target.select()}
+            className="font-body text-sm text-center w-full min-w-0 bg-transparent px-2 py-3 focus:outline-none"
+          />
+          <StepperButton
+            label="One guest more"
+            onClick={() => stepGuests(1)}
+            disabled={guests >= MAX_GUESTS}
+            icon={<Plus className="w-4 h-4" />}
+          />
+        </div>
+        <p id="guests-hint" className="font-body text-[11px] text-base-dark/45 leading-snug">
           {guests} {guests === 1 ? "guest" : "guests"} needs {roomsNeeded}{" "}
           {roomsNeeded === 1 ? "chalet" : "chalets"} ({MAX_ADULTS_PER_CHALET} adults per chalet).
+          We sleep up to {MAX_GUESTS}.
         </p>
       </div>
 
@@ -280,5 +352,36 @@ export default function BookingForm({ packages, preselectedPackageId }: Props) {
           : "Select your dates above"}
       </button>
     </form>
+  );
+}
+
+/**
+ * One of the −/+ controls flanking the guest count.
+ *
+ * `type="button"` matters: inside a form an unqualified button submits it, and
+ * nudging the party size is not a submission. Sized past the 44px touch target
+ * so it can be tapped without zooming in.
+ */
+function StepperButton({
+  label,
+  onClick,
+  disabled,
+  icon,
+}: {
+  label: string;
+  onClick: () => void;
+  disabled: boolean;
+  icon: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      className="flex items-center justify-center min-w-[44px] px-3 text-base-dark/60 hover:text-base-dark hover:bg-base-dark/5 active:bg-base-dark/10 transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-amber"
+    >
+      {icon}
+    </button>
   );
 }

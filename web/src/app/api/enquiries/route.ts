@@ -57,7 +57,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Could not send your enquiry. Please try again." }, { status: 500 });
   }
 
-  await sendEnquiryNotificationEmail(inserted);
+  // Saved either way — it is already in the admin queue — but an enquiry the
+  // lodge was never told about is worth an error line rather than silence.
+  const { sent, reason } = await sendEnquiryNotificationEmail(inserted);
+  if (!sent) {
+    console.error(`Enquiry ${inserted.id} saved but the lodge was NOT notified: ${reason}`);
+  }
 
   return NextResponse.json({ enquiry: inserted }, { status: 201 });
 }

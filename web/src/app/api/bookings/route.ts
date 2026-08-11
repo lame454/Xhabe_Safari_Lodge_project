@@ -2,9 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/server";
 import { checkAvailability } from "@/lib/data/availability";
+import { MAX_GUESTS } from "@/lib/data/capacity";
 import { sendBookingConfirmationEmail } from "@/lib/email";
 
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD format.");
+
+/**
+ * Party size, bounded by what the lodge can actually sleep.
+ *
+ * Derived from the capacity constants rather than written out, because a
+ * hardcoded ceiling here silently turned away the full-lodge bookings the form
+ * was happy to offer.
+ */
+const guestsSchema = z.coerce
+  .number()
+  .int()
+  .min(1)
+  .max(MAX_GUESTS, `We can sleep up to ${MAX_GUESTS} guests — please get in touch for a larger party.`);
 
 function isPastDate(date: string) {
   return date < new Date().toISOString().slice(0, 10);
@@ -14,7 +28,7 @@ const bookingSchema = z
   .object({
     checkIn: dateSchema,
     checkOut: dateSchema,
-    guests: z.coerce.number().int().min(1).max(16),
+    guests: guestsSchema,
     packageId: z.string().uuid().optional().or(z.literal("")).optional(),
     firstName: z.string().trim().min(1, "First name is required."),
     lastName: z.string().trim().min(1, "Last name is required."),
@@ -38,7 +52,7 @@ export async function GET(request: NextRequest) {
   const guests = Number(searchParams.get("guests") ?? "1");
 
   const parsed = z
-    .object({ checkIn: dateSchema, checkOut: dateSchema, guests: z.number().int().min(1).max(16) })
+    .object({ checkIn: dateSchema, checkOut: dateSchema, guests: guestsSchema })
     .refine((d) => d.checkOut > d.checkIn, { message: "Check-out must be after check-in." })
     .safeParse({ checkIn, checkOut, guests });
 
@@ -143,13 +157,25 @@ export async function POST(request: NextRequest) {
   // reported rather than collapsed into one flag, because a guest confirmation
   // that bounced and a lodge notification that never arrived are different
   // problems — the second means nobody knows the booking exists.
-  const { guestSent, lodgeSent } = await sendBookingConfirmationEmail(inserted, packageName);
+  const { guest, lodge } = await sendBookingConfirmationEmail(inserted, packageName);
 
+  // Worth its own line at error level: a request nobody was told about is
+  // otherwise indistinguishable in the logs from a successful one, and it sits
+  // in the admin queue until somebody happens to look.
+  if (!lodge.sent) {
+    console.error(
+      `Booking ${inserted.id} saved but the lodge was NOT notified: ${lodge.reason}`
+    );
+  }
+
+  // Only booleans go back to the browser. The reasons name environment
+  // variables and account settings, which is staff-facing detail — the admin
+  // page shows those to an authenticated user instead.
   return NextResponse.json(
     {
       booking: inserted,
-      emailSent: guestSent,
-      lodgeNotified: lodgeSent,
+      emailSent: guest.sent,
+      lodgeNotified: lodge.sent,
     },
     { status: 201 }
   );

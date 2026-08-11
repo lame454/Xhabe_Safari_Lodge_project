@@ -21,6 +21,15 @@ export const TOTAL_CHALETS = 9;
 /** Maximum 2 adults per chalet. */
 export const MAX_ADULTS_PER_CHALET = 2;
 
+/**
+ * Most guests the lodge can sleep at once, with every chalet full.
+ *
+ * The booking form and the API both bound the party size by this, so the two
+ * cannot drift apart — a form that offers a number the API rejects is worse
+ * than no limit at all.
+ */
+export const MAX_GUESTS = TOTAL_CHALETS * MAX_ADULTS_PER_CHALET;
+
 /** Chalets required to sleep `guests` people. */
 export function roomsNeeded(guests: number): number {
   return Math.max(1, Math.ceil(guests / MAX_ADULTS_PER_CHALET));

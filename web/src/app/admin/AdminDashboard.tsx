@@ -14,9 +14,11 @@ import {
   ExternalLink,
   MessageSquare,
   MessageCircle,
+  AlertTriangle,
 } from "lucide-react";
 import type { AdminBooking } from "@/lib/data/adminBookings";
 import type { BookingStatus, EnquiryRow } from "@/lib/data/types";
+import type { EmailHealth } from "@/lib/email";
 import { TOTAL_CHALETS } from "@/lib/data/capacity";
 import {
   decisionPlainText,
@@ -36,6 +38,7 @@ interface Props {
   enquiries: EnquiryRow[];
   occupancy: OccupancyDay[];
   loadError: string | null;
+  email: EmailHealth;
 }
 
 function formatDate(value: string): string {
@@ -60,7 +63,13 @@ function isPast(checkOut: string): boolean {
   return checkOut < new Date().toISOString().slice(0, 10);
 }
 
-export default function AdminDashboard({ bookings, enquiries, occupancy, loadError }: Props) {
+export default function AdminDashboard({
+  bookings,
+  enquiries,
+  occupancy,
+  loadError,
+  email,
+}: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -92,15 +101,25 @@ export default function AdminDashboard({ bookings, enquiries, occupancy, loadErr
         return false;
       }
 
+      // A decision email that did not go out is not a footnote: the booking has
+      // moved and the guest has not been told. It reads as an alert carrying
+      // the real reason, and the composer is left open so its WhatsApp button
+      // is right there — closing it would hide the only way left to reach them.
+      const emailFailed = Boolean(options.notifyGuest) && !body.guestNotified;
+
       if (options.notifyGuest) {
-        setNotice(
-          body.guestNotified
-            ? "Guest emailed."
-            : "Booking updated, but the email could not be sent — check the Resend sending domain."
-        );
+        if (emailFailed) {
+          setError(
+            `Booking updated, but the guest was NOT emailed. ${
+              body.guestNotifyError ?? "The email service refused the message."
+            } Reach them on WhatsApp or by phone instead.`
+          );
+        } else {
+          setNotice("Guest emailed.");
+        }
       }
 
-      setComposing(null);
+      if (!emailFailed) setComposing(null);
       // Re-run the server component so the list and occupancy strip both
       // reflect the change without a manual reload.
       startTransition(() => router.refresh());
@@ -164,6 +183,30 @@ export default function AdminDashboard({ bookings, enquiries, occupancy, loadErr
           <p role="alert" className="border border-red-200 bg-red-50 text-red-700 font-body text-sm px-4 py-3">
             {loadError ?? error}
           </p>
+        )}
+
+        {/*
+          Standing warning rather than a per-action one. Undelivered mail is
+          invisible from this end — the booking saves, the status changes, and
+          the only symptom is a guest who never replies — so the lodge is told
+          while the queue is still empty, not one lost guest at a time.
+        */}
+        {!email.canReachGuests && email.problem && (
+          <div className="border border-amber-300 bg-amber-50 px-4 py-3">
+            <p className="flex items-start gap-2 font-body text-sm text-amber-900 leading-relaxed">
+              <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <span>
+                <strong>Guests are not receiving emails.</strong> {email.problem}{" "}
+                Confirm bookings by WhatsApp until this is fixed — every booking is still
+                saved and listed below.
+              </span>
+            </p>
+            {email.remedy && (
+              <p className="font-body text-xs text-amber-800/80 leading-relaxed mt-2 pl-6">
+                <strong>To fix:</strong> {email.remedy}
+              </p>
+            )}
+          </div>
         )}
 
         {notice && (
