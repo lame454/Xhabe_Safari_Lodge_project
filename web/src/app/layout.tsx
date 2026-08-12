@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Gilda_Display, Nunito_Sans } from "next/font/google";
 import "./globals.css";
 import { SITE_URL } from "@/lib/config/site";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 
 const gildaDisplay = Gilda_Display({
   subsets: ["latin"],
@@ -39,6 +40,16 @@ export const metadata: Metadata = {
   },
   twitter: { card: "summary_large_image" },
   robots: { index: true, follow: true },
+  /*
+   * Search Console's HTML tag verification method. Set
+   * NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION to the content value Search Console
+   * gives you (Settings → Ownership verification → HTML tag) and this
+   * renders <meta name="google-site-verification" content="..." />
+   * automatically. Left unset, Next omits the field entirely — no empty tag.
+   */
+  verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
+    : undefined,
 };
 
 export default function RootLayout({
@@ -49,6 +60,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${gildaDisplay.variable} ${nunitoSans.variable}`}>
       <body className="antialiased min-h-screen flex flex-col">
+        <GoogleAnalytics />
         {children}
       </body>
     </html>
