@@ -65,7 +65,7 @@ export const CONTACT = {
 
   social: {
     facebook: "https://facebook.com/xhabesafarilodge",
-    instagram: "https://instagram.com/xhabesafarilodge",
+    instagram: "https://instagram.com/xhabe_safari_lodge",
   },
 } as const;
 
