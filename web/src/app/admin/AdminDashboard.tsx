@@ -101,25 +101,35 @@ export default function AdminDashboard({
         return false;
       }
 
-      // A decision email that did not go out is not a footnote: the booking has
-      // moved and the guest has not been told. It reads as an alert carrying
-      // the real reason, and the composer is left open so its WhatsApp button
-      // is right there — closing it would hide the only way left to reach them.
-      const emailFailed = Boolean(options.notifyGuest) && !body.guestNotified;
+      // "Accepted by Resend" and "landed with the guest" are not the same
+      // claim, and only the second one is worth telling staff. With
+      // RESEND_REDIRECT_TO set every message is delivered to one mailbox
+      // instead of its addressee, so Resend accepts it and reports success —
+      // reporting that as "Guest emailed" would be a lie staff act on by
+      // closing the booking and moving to the next one.
+      const guestReached = body.guestNotified && email.canReachGuests;
 
       if (options.notifyGuest) {
-        if (emailFailed) {
+        if (!body.guestNotified) {
           setError(
             `Booking updated, but the guest was NOT emailed. ${
               body.guestNotifyError ?? "The email service refused the message."
             } Reach them on WhatsApp or by phone instead.`
+          );
+        } else if (!guestReached) {
+          setError(
+            `Booking updated, and the email service accepted the message — but it did not go ` +
+              `to the guest. ${email.problem} Reach them on WhatsApp or by phone instead.`
           );
         } else {
           setNotice("Guest emailed.");
         }
       }
 
-      if (!emailFailed) setComposing(null);
+      // A decision the guest was not told about leaves the composer open, so
+      // its WhatsApp button is still to hand — closing it would hide the only
+      // way left to reach them.
+      if (!options.notifyGuest || guestReached) setComposing(null);
       // Re-run the server component so the list and occupancy strip both
       // reflect the change without a manual reload.
       startTransition(() => router.refresh());
