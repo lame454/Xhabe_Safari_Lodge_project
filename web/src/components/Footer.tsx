@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Mail, Phone, MessageCircle, MapPin, Facebook, Instagram } from "lucide-react";
 import Logo from "./Logo";
 import { CONTACT, mailtoHref, telHref, whatsappHref } from "@/lib/config/contact";
+import { LISTINGS } from "@/lib/data/listings";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -112,8 +113,28 @@ export default function Footer() {
           </div>
         </div>
 
+        {/* Find & book us elsewhere */}
+        <div className="border-t border-white/10 pt-8">
+          <p className="font-body text-[10px] uppercase tracking-[0.25em] text-white/40 mb-3">
+            Find &amp; Book Us On
+          </p>
+          <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-body text-white/70">
+            {LISTINGS.map((listing) => (
+              <a
+                key={listing.url}
+                href={listing.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-accent-amber active:text-accent-amber transition"
+              >
+                {listing.name}
+              </a>
+            ))}
+          </div>
+        </div>
+
         {/* Lower copyright bar */}
-        <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row justify-between items-center text-xs font-body text-white/50 gap-4">
+        <div className="mt-8 pt-8 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center text-xs font-body text-white/50 gap-4">
           <p>
             &copy; {currentYear} Xhabe Safari Lodge. All Rights Reserved.
           </p>

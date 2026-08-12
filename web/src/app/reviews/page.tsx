@@ -8,6 +8,9 @@ import StickyBookCta from "@/components/StickyBookCta";
 import { GlassPanel } from "@/components/Glass";
 import { CONTACT, mailtoHref } from "@/lib/config/contact";
 import { getFeaturedTestimonials } from "@/lib/data/testimonials";
+import { LISTINGS } from "@/lib/data/listings";
+
+const tripAdvisor = LISTINGS.find((listing) => listing.name === "TripAdvisor");
 
 export const metadata: Metadata = {
   title: "Guest Reviews | Xhabe Safari Lodge",
@@ -76,6 +79,20 @@ export default async function ReviewsPage() {
               </div>
               <p className="font-body text-[11px] text-base-dark/40 mt-6">
                 Or write to us at {CONTACT.email}
+                {tripAdvisor && (
+                  <>
+                    {" "}
+                    — or{" "}
+                    <a
+                      href={tripAdvisor.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:text-accent-amber transition"
+                    >
+                      leave a review on TripAdvisor
+                    </a>
+                  </>
+                )}
               </p>
             </GlassPanel>
           ) : (
