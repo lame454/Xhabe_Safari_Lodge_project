@@ -14,9 +14,9 @@ import {
  * Resend only sends from a domain you have verified. With RESEND_FROM_EMAIL
  * unset this falls back to Resend's shared onboarding sender, which refuses
  * every recipient except the Resend account owner's own address — confirmed
- * against the live API as knightlame454@gmail.com, which is *not* the test
- * inbox in CONTACT.email. Both the guest confirmation and the lodge
- * notification are currently rejected with a 403.
+ * against the live API as knightlame454@gmail.com. Guest-facing mail is
+ * therefore still rejected with a 403; lodge alerts are routed to
+ * CONTACT.alertsEmail so they keep arriving until a domain is verified.
  *
  * Nothing in the code can work around this; it is an account setting. Verify a
  * domain at resend.com/domains, then set RESEND_FROM_EMAIL to an address on it.
@@ -262,7 +262,9 @@ export async function sendBookingConfirmationEmail(
       html,
     }),
     send(resend, "lodge booking notification", {
-      to: CONTACT.email,
+      // Alerts go to the address Resend can actually deliver to, not the
+      // public one — see CONTACT.alertsEmail.
+      to: CONTACT.alertsEmail,
       replyTo: booking.email,
       subject: `New booking request — ${booking.first_name} ${booking.last_name}, ${formatDate(booking.check_in)}`,
       html: lodgeHtml,
@@ -340,7 +342,8 @@ export async function sendEnquiryNotificationEmail(enquiry: {
   }
 
   return send(new Resend(apiKey), "enquiry notification", {
-    to: CONTACT.email,
+    // See CONTACT.alertsEmail — deliverability, not preference.
+    to: CONTACT.alertsEmail,
     replyTo: enquiry.email,
     subject: `New website enquiry — ${enquiry.name}`,
     html: `

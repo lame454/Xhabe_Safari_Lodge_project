@@ -1,27 +1,25 @@
 /*
  * ============================================================================
- * TODO: SWAP TO PRODUCTION CONTACT DETAILS BEFORE LAUNCH
+ * The lodge's contact details — single source of truth.
  * ============================================================================
- * The email address and phone number below are TEMPORARY TEST CREDENTIALS.
- * They exist so booking/enquiry automation and QA can be run end-to-end
- * against a real inbox and a real WhatsApp number without reaching the
- * lodge's actual guests or staff.
+ * Every contact touchpoint on the site reads from here, so these are the only
+ * place the lodge's address, phone or email should ever appear. Do not
+ * hardcode them in components or pages.
  *
- * Production values to restore at go-live:
- *   email        reservations@xhabesafarilodge.com
- *   phone        +267 75 497 183   (wa.me/26775497183)
+ * Two things are still pending, both external to this code:
  *
- * Every contact touchpoint on the site reads from this file, so switching
- * back to production is a single edit here — do not hardcode contact
- * details in components or pages.
+ *   1. reservations@xhabesafari.com has no mailbox yet. The domain carries no
+ *      MX record, so mail sent there currently bounces. Set up a mailbox
+ *      (Google Workspace, Zoho, or forwarding at the registrar) before
+ *      pointing guests at it in print or on social.
+ *
+ *   2. No Resend sending domain is verified, which is why `alertsEmail` below
+ *      exists separately from `email`.
  * ============================================================================
  */
 
-/** Flips to false once the production details above are restored. */
-export const IS_TEST_CONTACT_CONFIG = true;
-
 /**
- * The lodge's single source of truth for contact details.
+ * The lodge's public contact details.
  *
  * `phoneE164` / `whatsappNumber` are the machine-readable forms — WhatsApp's
  * wa.me links require the full international number with no `+`, spaces, or
@@ -29,29 +27,39 @@ export const IS_TEST_CONTACT_CONFIG = true;
  * being stripped at each call site.
  */
 export const CONTACT = {
-  /*
-   * TEST inbox — see TODO above.
+  /**
+   * Shown to guests everywhere the site lists an email, and used as the
+   * reply-to on guest-facing mail.
    *
-   * This is deliberately the *Resend account owner's* address, and that
-   * coupling is load-bearing while no sending domain is verified: the shared
-   * onboarding sender is allowed to deliver to the account owner and nobody
-   * else, so this is the one value that lets a new-booking or enquiry
-   * notification actually arrive. Pointing it at any other inbox silently goes
-   * back to losing them — the previous value, vambulame5@gmail.com, was
-   * rejected with a 403 every time.
-   *
-   * Guest-facing mail is unaffected and still undeliverable; only a verified
-   * domain fixes that. Note this address is shown publicly wherever the site
-   * lists a contact email, so it wants replacing before launch either way.
+   * Pending a mailbox — see note 1 in the header above.
    */
-  email: "knightlame454@gmail.com",
+  email: "reservations@xhabesafari.com",
+
+  /**
+   * Where new-booking and enquiry alerts are actually delivered.
+   *
+   * TODO: delete this and route alerts to `email` once a Resend sending
+   * domain is verified.
+   *
+   * It is deliberately the Resend account owner's address, and that coupling
+   * is load-bearing: with no verified sending domain, Resend's shared
+   * onboarding sender is permitted to deliver to the account owner and nobody
+   * else. Pointing this at any other inbox silently loses every alert: the
+   * lodge address above would be rejected with a 403, which is exactly what
+   * happened the last time it was set to a different mailbox.
+   *
+   * Guest-facing mail is a separate problem and still undeliverable; only a
+   * verified domain fixes that. `emailHealth()` in lib/email.ts reports the
+   * current state on the admin dashboard.
+   */
+  alertsEmail: "knightlame454@gmail.com",
 
   /** Human-readable phone number, for on-screen text. */
-  phoneDisplay: "+267 72 109 942",
+  phoneDisplay: "+267 75 497 183",
   /** E.164 form, for tel: links. */
-  phoneE164: "+26772109942",
+  phoneE164: "+26775497183",
   /** Digits only, no leading +, for wa.me deep links. */
-  whatsappNumber: "26772109942",
+  whatsappNumber: "26775497183",
 
   addressLines: [
     "Plot 1504, Muchenje",
