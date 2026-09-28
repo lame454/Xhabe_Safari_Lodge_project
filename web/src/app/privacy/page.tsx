@@ -3,7 +3,7 @@ import Footer from "@/components/Footer";
 import NavBar from "@/components/NavBar";
 import { CONTACT } from "@/lib/config/contact";
 
-export const metadata: Metadata = { title: "Privacy Policy | Xhabe Safari Lodge", description: "How Xhabe Safari Lodge handles personal information." };
+export const metadata: Metadata = { title: "Privacy Policy | Xhabe Safari Lodge", description: "How Xhabe Safari Lodge in Chobe, Botswana collects, uses and protects the personal details you share when booking or sending an enquiry." };
 
 const sections = [
   ["Information we collect", "When you send an enquiry or booking request, we collect the information you provide, such as your name, email address, phone number, travel dates, guest count, and special requests."],

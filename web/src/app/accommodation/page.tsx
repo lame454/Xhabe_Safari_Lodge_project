@@ -12,7 +12,7 @@ import { LODGE } from "@/lib/data/lodge";
 export const metadata: Metadata = {
   title: "The Chalets | Xhabe Safari Lodge — Chobe, Botswana",
   description:
-    "Nine luxury tented chalets at Xhabe Safari Lodge, each with a super king bed, two private balconies over the Chobe floodplain, air conditioning and an en-suite bathroom.",
+    "Nine luxury tented chalets in Chobe, Botswana. Each has a super king bed, two private balconies over the floodplain and air conditioning.",
 };
 
 const CHALET_PHOTOS = [

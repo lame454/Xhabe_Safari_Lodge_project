@@ -11,7 +11,7 @@ import { LODGE } from "@/lib/data/lodge";
 export const metadata: Metadata = {
   title: "About | Xhabe Safari Lodge — Chobe, Botswana",
   description:
-    "Xhabe Safari Lodge sits on a plateau in Chobe West, five kilometres from Chobe National Park. All ten staff come from the Chobe Enclave, and the lodge sources its crafts, produce and materials locally.",
+    "Xhabe Safari Lodge sits on a plateau in Chobe West, 5 km from Chobe National Park. All ten staff come from the Chobe Enclave, as do its crafts and produce.",
 };
 
 export default function AboutPage() {

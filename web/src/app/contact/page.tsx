@@ -10,7 +10,7 @@ import { CONTACT, mailtoHref, telHref, whatsappHref } from "@/lib/config/contact
 export const metadata: Metadata = {
   title: "Contact Us | Xhabe Safari Lodge — Enquiries & Directions",
   description:
-    "Contact Xhabe Safari Lodge for bookings, enquiries, and directions. Located near Ngoma Border Gate in the Chobe District, Botswana. WhatsApp, email, and phone available.",
+    "Contact Xhabe Safari Lodge in Chobe, Botswana by email, phone or WhatsApp. Near the Ngoma border gate. We reply to enquiries within 24 hours.",
 };
 
 const contactDetails = [

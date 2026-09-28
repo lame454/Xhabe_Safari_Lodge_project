@@ -12,7 +12,7 @@ import { getGalleryImages, filterByActivity, previewImageByActivity } from "@/li
 export const metadata: Metadata = {
   title: "Activities | Xhabe Safari Lodge — Chobe, Botswana",
   description:
-    "Game drives morning, afternoon and night, Chobe River boat cruises, mokoro trips, sundowners, Victoria Falls day trips, village tours and basketry weaving at Xhabe Safari Lodge.",
+    "Game drives, Chobe River boat cruises, sundowners, village tours and Victoria Falls day trips from Xhabe Safari Lodge in Chobe, Botswana.",
 };
 
 export default async function ActivitiesPage() {

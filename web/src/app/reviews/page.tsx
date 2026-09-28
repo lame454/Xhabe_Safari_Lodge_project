@@ -15,7 +15,7 @@ const tripAdvisor = LISTINGS.find((listing) => listing.name === "TripAdvisor");
 export const metadata: Metadata = {
   title: "Guest Reviews | Xhabe Safari Lodge",
   description:
-    "Guest reviews of Xhabe Safari Lodge in the Chobe District, Botswana.",
+    "Guest reviews of Xhabe Safari Lodge, a nine-chalet luxury tented lodge in the Chobe District of Botswana. Read guest accounts, or share your own stay.",
 };
 
 export default async function ReviewsPage() {

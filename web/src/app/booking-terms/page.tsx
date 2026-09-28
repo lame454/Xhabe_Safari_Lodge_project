@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Footer from "@/components/Footer";
 import NavBar from "@/components/NavBar";
 
-export const metadata: Metadata = { title: "Booking Terms | Xhabe Safari Lodge", description: "Booking terms and cancellation conditions for Xhabe Safari Lodge." };
+export const metadata: Metadata = { title: "Booking Terms | Xhabe Safari Lodge", description: "Booking terms, payment schedule and cancellation conditions for Xhabe Safari Lodge, the nine-chalet tented lodge in Chobe District, Botswana." };
 
 const sections = [
   ["Booking requests", "Submitting a request does not create a confirmed reservation. We will confirm availability, rates, the deposit amount, and final terms in writing before a booking is secured."],

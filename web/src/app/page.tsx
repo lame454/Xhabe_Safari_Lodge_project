@@ -13,7 +13,7 @@ import { CURRENCY, lowestNightlyRate } from "@/lib/data/rates";
 export const metadata: Metadata = {
   title: "Xhabe Safari Lodge | Exclusive Wilderness — Chobe, Botswana",
   description:
-    "Nine luxury tented chalets on a plateau above the Chobe River floodplain, five kilometres from Chobe National Park. Game drives, river cruises, boma dinners and the largest pool in the area.",
+    "Nine luxury tented chalets above the Chobe River floodplain, 5 km from Chobe National Park. All meals, a game drive and sundowners included in the rate.",
 };
 
 export default function HomePage() {
