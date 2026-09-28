@@ -114,7 +114,7 @@ export const LODGE = {
       imageAlt:
         "The swimming pool at Xhabe Safari Lodge with two tented chalets and the Chobe floodplain beyond",
       points: [
-        "15 by 7 metres — the largest pool in the area",
+        "15 by 7 metres, the largest pool in the area",
         "Relief from Chobe temperatures that reach 38–39°C",
         "Overlooks the Chobe River",
       ],
@@ -150,7 +150,7 @@ export const LODGE = {
   /** Verbatim from the deck's services list. */
   services: [
     "Well-maintained fleet for activities",
-    "24-hour security — CCTV, electric fence and guard",
+    "24-hour security: CCTV, electric fence and guard",
     "Free parking",
     "Safety, health and environment briefing on arrival",
     "Fire services throughout the lodge",

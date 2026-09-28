@@ -220,3 +220,55 @@ export function breadcrumbSchema(trail: ReadonlyArray<{ name: string; path: stri
     })),
   };
 }
+
+/**
+ * A guide page, as an Article.
+ *
+ * `publisher` and `about` both point at the lodge's @id rather than repeating
+ * its details, which is the whole reason the entity carries a stable id: a
+ * crawler resolves one business from the graph instead of guessing whether
+ * three descriptions refer to the same place.
+ *
+ * No `author` is claimed. These guides are the lodge's own material and there
+ * is no named writer to credit, and inventing a byline to satisfy a schema
+ * validator is exactly the kind of fabrication this file exists to avoid.
+ */
+export function guideArticleSchema(guide: {
+  slug: string;
+  title: string;
+  summary: string;
+  image: string;
+}, lastReviewed: string) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "@id": `${absoluteUrl(`/guides/${guide.slug}`)}#article`,
+    headline: guide.title,
+    description: guide.summary,
+    image: absoluteUrl(guide.image),
+    url: absoluteUrl(`/guides/${guide.slug}`),
+    dateModified: new Date(lastReviewed).toISOString().slice(0, 10),
+    publisher: { "@id": LODGE_ID },
+    about: { "@id": LODGE_ID },
+    isPartOf: { "@id": WEBSITE_ID },
+    inLanguage: "en",
+  };
+}
+
+/** The guides index, as a list a crawler can walk without parsing the layout. */
+export function guidesListSchema(
+  guides: ReadonlyArray<{ slug: string; title: string }>
+) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "@id": `${absoluteUrl("/guides")}#list`,
+    name: "Guides to staying at Xhabe Safari Lodge",
+    itemListElement: guides.map((guide, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: guide.title,
+      url: absoluteUrl(`/guides/${guide.slug}`),
+    })),
+  };
+}

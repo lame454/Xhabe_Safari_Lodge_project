@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/config/site";
+import { GUIDES } from "@/lib/data/guides";
 
 /*
  * Routes worth indexing, with the priority the lodge actually assigns them.
@@ -15,6 +16,7 @@ const ROUTES = [
   { path: "/rates", priority: 0.9, changeFrequency: "monthly" as const },
   { path: "/contact", priority: 0.9, changeFrequency: "monthly" as const },
   { path: "/faq", priority: 0.8, changeFrequency: "monthly" as const },
+  { path: "/guides", priority: 0.7, changeFrequency: "monthly" as const },
   { path: "/accommodation", priority: 0.8, changeFrequency: "monthly" as const },
   { path: "/activities", priority: 0.8, changeFrequency: "monthly" as const },
   { path: "/about", priority: 0.7, changeFrequency: "monthly" as const },
@@ -37,8 +39,20 @@ const ROUTES = [
  */
 const CONTENT_UPDATED = new Date("2026-09-28T00:00:00Z");
 
+/*
+ * Guides are appended rather than listed by hand, so adding one to
+ * lib/data/guides.ts publishes it. A guide that exists but is missing from the
+ * sitemap is the quiet failure this avoids: it renders perfectly for anybody
+ * given the link and is invisible to everybody else.
+ */
+const GUIDE_ROUTES = GUIDES.map((guide) => ({
+  path: `/guides/${guide.slug}`,
+  priority: 0.6,
+  changeFrequency: "monthly" as const,
+}));
+
 export default function sitemap(): MetadataRoute.Sitemap {
-  return ROUTES.map((route) => ({
+  return [...ROUTES, ...GUIDE_ROUTES].map((route) => ({
     url: `${SITE_URL}${route.path}`,
     lastModified: CONTENT_UPDATED,
     changeFrequency: route.changeFrequency,

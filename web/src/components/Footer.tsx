@@ -62,6 +62,7 @@ export default function Footer() {
                 { href: "/rates", label: "Rates" },
                 { href: "/gallery", label: "Gallery" },
                 { href: "/reviews", label: "Guest Reviews" },
+                { href: "/guides", label: "Guides" },
                 { href: "/faq", label: "FAQ" },
                 { href: "/contact", label: "Contact" },
               ].map((link) => (

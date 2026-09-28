@@ -80,16 +80,30 @@ export const RATE_EXCLUDES = [
   "VAT",
 ];
 
+/*
+ * Payment and cancellation terms come from /booking-terms, NOT from the rates
+ * deck, and that split is deliberate.
+ *
+ * The deck and the booking-terms page disagreed: the deck set out a staged
+ * 20/50/balance schedule at 45, 30 and 15 days, while the page said a deposit
+ * secures the booking with the balance due at 30 days. The page was confirmed
+ * as the policy actually in force, so the deck's schedule is superseded here.
+ *
+ * The deck remains the source for rates. Terms live on the page. Anyone
+ * tempted to "restore" these from the deck later would be reintroducing a
+ * contradiction that reached guests on three surfaces at once, since these
+ * strings render on /rates, /faq and /llms.txt.
+ */
 export const PAYMENT_POLICY = [
-  "20% deposit to confirm, 45 days before arrival",
-  "50% payment 30 days before arrival",
-  "Balance settled 15 days before arrival",
+  "A deposit is required to secure a confirmed reservation",
+  "The balance is due 30 days before arrival, unless your written confirmation states otherwise",
 ];
 
+/** See the note on PAYMENT_POLICY above: these mirror /booking-terms. */
 export const CANCELLATION_POLICY = [
-  "Cancel within 24 hours of the first payment: full refund, less bank fees",
-  "Cancel after 24 hours: 50% refunded, for the following 15 days",
-  "After that 15-day window: no refund",
+  "30 or more days before arrival: full refund of the deposit",
+  "15 to 29 days before arrival: 50% of the deposit refunded",
+  "Within 14 days of arrival: the deposit is forfeited",
 ];
 
 /** Lowest published nightly rate, for "from" pricing. */
