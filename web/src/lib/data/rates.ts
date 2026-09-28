@@ -87,9 +87,9 @@ export const PAYMENT_POLICY = [
 ];
 
 export const CANCELLATION_POLICY = [
-  "Cancel within 24 hours of the first payment — full refund, less bank fees",
-  "Cancel after 24 hours — 50% refunded, for the following 15 days",
-  "After that 15-day window — no refund",
+  "Cancel within 24 hours of the first payment: full refund, less bank fees",
+  "Cancel after 24 hours: 50% refunded, for the following 15 days",
+  "After that 15-day window: no refund",
 ];
 
 /** Lowest published nightly rate, for "from" pricing. */
