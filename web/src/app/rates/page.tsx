@@ -18,6 +18,7 @@ import {
   TRANSFER_RATES,
   VALID_PERIOD,
 } from "@/lib/data/rates";
+import { LAST_REVIEWED } from "@/lib/data/quickFacts";
 
 export const metadata: Metadata = {
   title: "Rates | Xhabe Safari Lodge — Chobe, Botswana",
@@ -49,6 +50,19 @@ export default function RatesPage() {
             What a night costs.
           </h1>
           <p className="font-body text-sm text-white/70 mt-4">Valid {VALID_PERIOD}</p>
+          {/*
+            * A checked-on date, separate from the validity period.
+            *
+            * The two answer different questions. "Valid until" is the lodge's
+            * commitment; "last reviewed" is when a human last confirmed the
+            * page still matches the rate card. A guest deciding whether to
+            * trust a price, and a search engine deciding whether a page is
+            * stale, both want the second one, and travel sites are notorious
+            * for publishing neither.
+            */}
+          <p className="font-body text-xs text-white/50 mt-2">
+            Rates last reviewed {LAST_REVIEWED}
+          </p>
         </div>
       </section>
 
